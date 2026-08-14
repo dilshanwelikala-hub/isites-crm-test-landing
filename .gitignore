@@ -1,0 +1,11 @@
+node_modules
+.next
+out
+dist
+payload-types.ts
+payload-data.db
+payload-data.db-*
+.env.local
+.env.production
+.env
+public/media
