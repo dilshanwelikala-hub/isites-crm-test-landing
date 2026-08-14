@@ -10,6 +10,7 @@ This is a simple editable landing page prototype built with Next.js and Payload 
 - Editable package cards with draft/published workflow
 - Local media uploads
 - Local SQLite database for the first test build
+- Hosted Postgres support for Vercel deployments
 
 ## Local setup
 
@@ -47,3 +48,19 @@ In the admin panel:
 - Upload images under `Media`
 
 The public page includes fallback content so it looks complete before CMS records are added.
+
+## Vercel database
+
+For hosted editing, connect a Neon Postgres database in Vercel and make sure the project has either:
+
+```text
+DATABASE_URL
+```
+
+or:
+
+```text
+POSTGRES_URL
+```
+
+When either variable exists, Payload uses Postgres. Without one, local development falls back to SQLite.

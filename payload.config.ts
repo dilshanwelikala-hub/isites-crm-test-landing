@@ -1,6 +1,7 @@
 import path from 'path'
 import { fileURLToPath } from 'url'
 
+import { postgresAdapter } from '@payloadcms/db-postgres'
 import { sqliteAdapter } from '@payloadcms/db-sqlite'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { buildConfig } from 'payload'
@@ -13,6 +14,7 @@ import { LandingPage } from './src/globals/LandingPage'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+const databaseURL = process.env.DATABASE_URL || process.env.POSTGRES_URL
 
 export default buildConfig({
   admin: {
@@ -32,11 +34,17 @@ export default buildConfig({
     },
   },
   collections: [Users, Media, LandingPackages],
-  db: sqliteAdapter({
-    client: {
-      url: process.env.DATABASE_URI || 'file:./payload-data.db',
-    },
-  }),
+  db: databaseURL
+    ? postgresAdapter({
+        pool: {
+          connectionString: databaseURL,
+        },
+      })
+    : sqliteAdapter({
+        client: {
+          url: process.env.DATABASE_URI || 'file:./payload-data.db',
+        },
+      }),
   editor: lexicalEditor({}),
   globals: [LandingPage],
   routes: {
