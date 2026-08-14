@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node --import tsx scripts/sync-payload-schema.mjs && next build",
+    "build:next": "next build",
     "start": "next start",
     "payload": "payload",
     "generate:types": "payload generate:types",
@@ -27,6 +28,7 @@
     "@types/node": "^24.2.1",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
+    "tsx": "^4.23.12",
     "typescript": "^5.9.2"
   }
 }
