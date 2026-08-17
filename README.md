@@ -76,3 +76,13 @@ POSTGRES_URL
 When either variable exists, Payload uses Postgres. Without one, local development falls back to SQLite.
 
 The build command runs a small schema sync before `next build` whenever hosted Postgres is configured. This creates the initial Payload tables for the Vercel demo database.
+
+## Hosted media uploads
+
+For persistent media on Vercel, connect Vercel Blob storage to the project. Vercel should add:
+
+```text
+BLOB_READ_WRITE_TOKEN
+```
+
+When this variable exists, the `media` collection stores uploads in Vercel Blob. Without it, local development continues to use local media storage.

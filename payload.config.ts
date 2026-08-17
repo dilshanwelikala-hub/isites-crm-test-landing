@@ -4,9 +4,11 @@ import { fileURLToPath } from 'url'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { sqliteAdapter } from '@payloadcms/db-sqlite'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import { buildConfig } from 'payload'
 import sharp from 'sharp'
 
+import { Inquiries } from './src/collections/Inquiries'
 import { LandingPackages } from './src/collections/LandingPackages'
 import { Media } from './src/collections/Media'
 import { Users } from './src/collections/Users'
@@ -33,7 +35,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, LandingPackages],
+  collections: [Users, Media, LandingPackages, Inquiries],
   db: databaseURL
     ? postgresAdapter({
         pool: {
@@ -47,6 +49,18 @@ export default buildConfig({
       }),
   editor: lexicalEditor({}),
   globals: [LandingPage],
+  plugins: [
+    vercelBlobStorage({
+      enabled: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+      collections: {
+        media: {
+          prefix: 'landing-media',
+        },
+      },
+      clientUploads: true,
+    }),
+  ],
   routes: {
     admin: '/admin',
     api: '/api',

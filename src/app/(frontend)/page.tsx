@@ -95,6 +95,11 @@ function PackageActions({ item }: { item: LandingPackage }) {
           {item.secondaryAction.label || 'View details'}
         </a>
       ) : null}
+      {item.slug ? (
+        <a className="button buttonSecondary" href={`/packages/${item.slug}`}>
+          Package page
+        </a>
+      ) : null}
     </div>
   )
 }

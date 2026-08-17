@@ -18,6 +18,7 @@
     "@payloadcms/db-sqlite": "^3.86.0",
     "@payloadcms/next": "^3.86.0",
     "@payloadcms/richtext-lexical": "^3.86.0",
+    "@payloadcms/storage-vercel-blob": "^3.88.0",
     "graphql": "^16.11.0",
     "next": "15.4.11",
     "payload": "^3.86.0",
