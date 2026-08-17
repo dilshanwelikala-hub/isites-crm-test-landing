@@ -1,172 +1,20 @@
+import type { Metadata } from 'next'
+
 import config from '@payload-config'
 import { getPayload } from 'payload'
 
-type SectionKey = 'curated' | 'partner' | 'events'
+import {
+  defaultContent,
+  defaultPackages,
+  type LandingContent,
+  type LandingPackage,
+} from '../../lib/landingDefaults'
 
-type LandingSection = {
-  key: SectionKey
-  label: string
-  heading: string
-  description?: string
+export const dynamic = 'force-dynamic'
+
+function siteURL() {
+  return (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
 }
-
-type Action = {
-  label?: string
-  url?: string
-}
-
-type LandingPackage = {
-  title: string
-  category: SectionKey
-  summary: string
-  details?: string
-  fallbackImageUrl?: string
-  image?: {
-    url?: string
-    alt?: string
-  }
-  primaryAction?: Action
-  secondaryAction?: Action
-}
-
-type LandingContent = {
-  hero?: {
-    eyebrow?: string
-    title?: string
-    description?: string
-    fallbackImageUrl?: string
-    image?: {
-      url?: string
-    }
-  }
-  intro?: {
-    heading?: string
-    body?: string
-  }
-  sections?: LandingSection[]
-  newsletter?: {
-    heading?: string
-    body?: string
-    buttonLabel?: string
-  }
-  footer?: {
-    brand?: string
-    address?: string
-    phone?: string
-  }
-}
-
-const defaultContent = {
-  hero: {
-    eyebrow: 'Packages',
-    title: 'Packages & Experiences',
-    description:
-      'Enhance your stay with curated packages, local collaborations, and memorable seasonal events.',
-    fallbackImageUrl:
-      'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=80',
-  },
-  intro: {
-    heading: 'Choose the stay that fits the moment',
-    body: 'From relaxed escapes to partner-led adventures, each offer is designed to make planning simple and the experience feel considered.',
-  },
-  sections: [
-    {
-      key: 'curated',
-      label: 'Curated Getaways',
-      heading: 'Curated Getaway Packages',
-      description: 'Thoughtfully designed resort packages for an easier escape.',
-    },
-    {
-      key: 'partner',
-      label: 'Partner Experiences',
-      heading: 'Featured Partner Experiences',
-      description: 'Experiences offered with trusted local partners.',
-    },
-    {
-      key: 'events',
-      label: 'Ticketed Events',
-      heading: 'Signature Ticketed Events',
-      description: 'Seasonal dinners, celebrations, and resort events worth planning around.',
-    },
-  ],
-  newsletter: {
-    heading: 'Stay Connected',
-    body: 'Keep up to date on the latest offers, events, and news.',
-    buttonLabel: 'Sign up',
-  },
-  footer: {
-    brand: 'The Test Resort',
-    address: '70 Mountain Way, Essex, VT',
-    phone: '802-878-1100',
-  },
-}
-
-const defaultPackages: LandingPackage[] = [
-  {
-    title: 'Rise & Renew',
-    category: 'curated',
-    summary: 'A restorative escape with breakfast, spa time, and a slower start to the day.',
-    fallbackImageUrl:
-      'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1100&q=80',
-    primaryAction: { label: 'Book now', url: '#' },
-    secondaryAction: { label: 'View details', url: '#' },
-  },
-  {
-    title: 'The Signature Escape',
-    category: 'curated',
-    summary: 'A polished weekend package with dining credit and room to unwind.',
-    fallbackImageUrl:
-      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1100&q=80',
-    primaryAction: { label: 'Book now', url: '#' },
-    secondaryAction: { label: 'View details', url: '#' },
-  },
-  {
-    title: 'Romantic Getaway',
-    category: 'curated',
-    summary: 'A thoughtful stay for two with quiet touches, dinner, and late checkout.',
-    fallbackImageUrl:
-      'https://images.unsplash.com/photo-1501117716987-c8e1ecb2100f?auto=format&fit=crop&w=1100&q=80',
-    primaryAction: { label: 'Book now', url: '#' },
-    secondaryAction: { label: 'View details', url: '#' },
-  },
-  {
-    title: 'Above Reality',
-    category: 'partner',
-    summary: 'Pair your stay with an unforgettable hot air balloon experience over open scenery.',
-    details:
-      'Book your stay through the resort, then reserve the flight directly with the partner operator.',
-    fallbackImageUrl:
-      'https://images.unsplash.com/photo-1507608869274-d3177c8bb4c7?auto=format&fit=crop&w=1200&q=80',
-    primaryAction: { label: 'Book your stay', url: '#' },
-    secondaryAction: { label: 'Book your ride', url: '#' },
-  },
-  {
-    title: 'Fish Tales',
-    category: 'partner',
-    summary: 'A guided outdoor experience shaped around the way you like to fish.',
-    details: 'Our team helps connect guests with a local guide for a tailored day on the water.',
-    fallbackImageUrl:
-      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
-    primaryAction: { label: 'Call to book', url: 'tel:8028781100' },
-    secondaryAction: { label: 'Experience details', url: '#' },
-  },
-  {
-    title: 'Summer Concert Series',
-    category: 'events',
-    summary: 'Preferred stay rates plus tickets when a partner performance lines up with your visit.',
-    fallbackImageUrl:
-      'https://images.unsplash.com/photo-1506157786151-b8491531f063?auto=format&fit=crop&w=1100&q=80',
-    primaryAction: { label: 'Learn more', url: '#' },
-  },
-  {
-    title: 'Holiday Brunch',
-    category: 'events',
-    summary: 'Seasonal dining events for families, friends, and special occasions.',
-    fallbackImageUrl:
-      'https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=1100&q=80',
-    primaryAction: { label: 'Learn more', url: '#' },
-  },
-]
 
 async function getLandingData() {
   try {
@@ -195,14 +43,43 @@ async function getLandingData() {
     }
   } catch {
     return {
-      content: defaultContent as LandingContent,
+      content: defaultContent,
       packages: defaultPackages,
     }
   }
 }
 
+export async function generateMetadata(): Promise<Metadata> {
+  const { content } = await getLandingData()
+  const title = content.seo?.title || defaultContent.seo?.title
+  const description = content.seo?.description || defaultContent.seo?.description
+  const image =
+    content.hero?.image?.url || content.hero?.fallbackImageUrl || defaultContent.hero?.fallbackImageUrl
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: siteURL(),
+    },
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      url: siteURL(),
+      images: image ? [{ url: image }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: image ? [image] : undefined,
+    },
+  }
+}
+
 function imageFor(item: LandingPackage) {
-  return item.image?.url || item.fallbackImageUrl || defaultContent.hero.fallbackImageUrl
+  return item.image?.url || item.fallbackImageUrl || defaultContent.hero?.fallbackImageUrl || ''
 }
 
 function PackageActions({ item }: { item: LandingPackage }) {
@@ -222,17 +99,52 @@ function PackageActions({ item }: { item: LandingPackage }) {
   )
 }
 
+function PackageMeta({ item }: { item: LandingPackage }) {
+  const meta = [item.priceLabel, item.duration].filter(Boolean)
+
+  if (!item.badge && !meta.length) {
+    return null
+  }
+
+  return (
+    <div className="packageMeta">
+      {item.badge ? <span>{item.badge}</span> : null}
+      {meta.map((value) => (
+        <span key={value}>{value}</span>
+      ))}
+    </div>
+  )
+}
+
+function PackageInclusions({ item }: { item: LandingPackage }) {
+  const inclusions = item.inclusions?.filter((inclusion) => inclusion.item)
+
+  if (!inclusions?.length) {
+    return null
+  }
+
+  return (
+    <ul className="inclusions">
+      {inclusions.slice(0, 3).map((inclusion) => (
+        <li key={inclusion.item}>{inclusion.item}</li>
+      ))}
+    </ul>
+  )
+}
+
 export default async function Page() {
   const { content, packages } = await getLandingData()
-  const sections = content.sections?.length ? content.sections : defaultContent.sections
+  const sections = content.sections?.length ? content.sections : defaultContent.sections || []
+  const stats = content.stats?.length ? content.stats : defaultContent.stats || []
   const heroImage =
-    content.hero?.image?.url || content.hero?.fallbackImageUrl || defaultContent.hero.fallbackImageUrl
+    content.hero?.image?.url || content.hero?.fallbackImageUrl || defaultContent.hero?.fallbackImageUrl
+  const heroAlt = content.hero?.image?.alt || content.hero?.title || defaultContent.hero?.title || ''
 
   return (
     <main>
       <header className="siteHeader">
         <a className="brand" href="/">
-          {content.footer?.brand || defaultContent.footer.brand}
+          {content.footer?.brand || defaultContent.footer?.brand}
         </a>
         <nav aria-label="Package sections">
           {sections.map((section) => (
@@ -247,21 +159,46 @@ export default async function Page() {
       </header>
 
       <section className="hero">
-        <img src={heroImage} alt="" />
+        {heroImage ? <img src={heroImage} alt={heroAlt} /> : null}
         <div className="heroOverlay" />
         <div className="heroContent">
-          <p>{content.hero?.eyebrow || defaultContent.hero.eyebrow}</p>
-          <h1>{content.hero?.title || defaultContent.hero.title}</h1>
-          <span>{content.hero?.description || defaultContent.hero.description}</span>
-          <a href="#curated">Explore offers</a>
+          <p>{content.hero?.eyebrow || defaultContent.hero?.eyebrow}</p>
+          <h1>{content.hero?.title || defaultContent.hero?.title}</h1>
+          <span>{content.hero?.description || defaultContent.hero?.description}</span>
+          <a href={content.hero?.ctaUrl || defaultContent.hero?.ctaUrl || '#curated'}>
+            {content.hero?.ctaLabel || defaultContent.hero?.ctaLabel || 'Explore offers'}
+          </a>
         </div>
       </section>
 
+      {content.alert?.text ? (
+        <section className="alertBand">
+          <strong>{content.alert.label || 'Update'}</strong>
+          <span>{content.alert.text}</span>
+          {content.alert.linkUrl ? (
+            <a href={content.alert.linkUrl}>{content.alert.linkLabel || 'Learn more'}</a>
+          ) : null}
+        </section>
+      ) : null}
+
       <section className="intro">
-        <p>Packages & Experiences</p>
-        <h2>{content.intro?.heading || defaultContent.intro.heading}</h2>
-        <span>{content.intro?.body || defaultContent.intro.body}</span>
+        <p>{content.intro?.eyebrow || defaultContent.intro?.eyebrow}</p>
+        <div>
+          <h2>{content.intro?.heading || defaultContent.intro?.heading}</h2>
+          <span>{content.intro?.body || defaultContent.intro?.body}</span>
+        </div>
       </section>
+
+      {stats.length ? (
+        <section className="stats" aria-label="Landing page highlights">
+          {stats.map((stat) => (
+            <div key={`${stat.value}-${stat.label}`}>
+              <strong>{stat.value}</strong>
+              <span>{stat.label}</span>
+            </div>
+          ))}
+        </section>
+      ) : null}
 
       <div className="tabs" aria-label="Jump to package sections">
         {sections.map((section) => (
@@ -283,51 +220,78 @@ export default async function Page() {
               {section.description ? <span>{section.description}</span> : null}
             </div>
 
-            <div className={isPartner ? 'partnerList' : 'cardGrid'}>
-              {sectionPackages.map((item) =>
-                isPartner ? (
-                  <article className="partnerCard" key={item.title}>
-                    <img src={imageFor(item)} alt={item.image?.alt || item.title} />
-                    <div>
-                      <h3>{item.title}</h3>
-                      <p>{item.summary}</p>
-                      {item.details ? <span>{item.details}</span> : null}
-                      <PackageActions item={item} />
-                    </div>
-                  </article>
-                ) : (
-                  <article className="packageCard" key={item.title}>
-                    <img src={imageFor(item)} alt={item.image?.alt || item.title} />
-                    <div>
-                      <h3>{item.title}</h3>
-                      <p>{item.summary}</p>
-                      <PackageActions item={item} />
-                    </div>
-                  </article>
-                ),
-              )}
-            </div>
+            {sectionPackages.length ? (
+              <div className={isPartner ? 'partnerList' : 'cardGrid'}>
+                {sectionPackages.map((item) =>
+                  isPartner ? (
+                    <article className="partnerCard" key={item.slug || item.title}>
+                      <img src={imageFor(item)} alt={item.image?.alt || item.title} />
+                      <div>
+                        <PackageMeta item={item} />
+                        <h3>{item.title}</h3>
+                        <p>{item.summary}</p>
+                        {item.details ? <span>{item.details}</span> : null}
+                        <PackageInclusions item={item} />
+                        <PackageActions item={item} />
+                      </div>
+                    </article>
+                  ) : (
+                    <article className="packageCard" key={item.slug || item.title}>
+                      <img src={imageFor(item)} alt={item.image?.alt || item.title} />
+                      <div>
+                        <PackageMeta item={item} />
+                        <h3>{item.title}</h3>
+                        <p>{item.summary}</p>
+                        <PackageInclusions item={item} />
+                        <PackageActions item={item} />
+                      </div>
+                    </article>
+                  ),
+                )}
+              </div>
+            ) : (
+              <p className="emptyState">No published offers in this section yet.</p>
+            )}
           </section>
         )
       })}
 
+      <section className="feature">
+        <div>
+          <p>{content.feature?.eyebrow || defaultContent.feature?.eyebrow}</p>
+          <h2>{content.feature?.heading || defaultContent.feature?.heading}</h2>
+        </div>
+        <div>
+          <span>{content.feature?.body || defaultContent.feature?.body}</span>
+          <ul>
+            {(content.feature?.points?.length
+              ? content.feature.points
+              : defaultContent.feature?.points || []
+            ).map((point) => (point.item ? <li key={point.item}>{point.item}</li> : null))}
+          </ul>
+        </div>
+      </section>
+
       <section className="newsletter">
         <div>
-          <p>Newsletter</p>
-          <h2>{content.newsletter?.heading || defaultContent.newsletter.heading}</h2>
-          <span>{content.newsletter?.body || defaultContent.newsletter.body}</span>
+          <p>{content.newsletter?.eyebrow || defaultContent.newsletter?.eyebrow}</p>
+          <h2>{content.newsletter?.heading || defaultContent.newsletter?.heading}</h2>
+          <span>{content.newsletter?.body || defaultContent.newsletter?.body}</span>
         </div>
         <form>
           <label htmlFor="email">Email address</label>
           <input id="email" name="email" placeholder="you@example.com" type="email" />
-          <button type="button">{content.newsletter?.buttonLabel || 'Sign up'}</button>
+          <a className="newsletterButton" href={content.newsletter?.buttonUrl || '#'}>
+            {content.newsletter?.buttonLabel || 'Sign up'}
+          </a>
         </form>
       </section>
 
       <footer className="footer">
-        <strong>{content.footer?.brand || defaultContent.footer.brand}</strong>
-        <span>{content.footer?.address || defaultContent.footer.address}</span>
-        <span>{content.footer?.phone || defaultContent.footer.phone}</span>
+        <strong>{content.footer?.brand || defaultContent.footer?.brand}</strong>
+        <span>{content.footer?.address || defaultContent.footer?.address}</span>
+        <span>{content.footer?.phone || defaultContent.footer?.phone}</span>
+        {content.footer?.email ? <a href={`mailto:${content.footer.email}`}>{content.footer.email}</a> : null}
       </footer>
     </main>
   )

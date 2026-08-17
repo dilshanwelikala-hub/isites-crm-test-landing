@@ -49,6 +49,16 @@ In the admin panel:
 
 The public page includes fallback content so it looks complete before CMS records are added.
 
+## Demo content
+
+To populate the CMS with the packaged demo content, run:
+
+```bash
+npm run seed
+```
+
+The seed command publishes the landing page settings and the sample offers. It can also update existing seeded records by slug.
+
 ## Vercel database
 
 For hosted editing, connect a Neon Postgres database in Vercel and make sure the project has either:

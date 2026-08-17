@@ -1,3 +1,7 @@
+import nextEnv from '@next/env'
+
+nextEnv.loadEnvConfig(process.cwd())
+
 const databaseURL = process.env.DATABASE_URL || process.env.POSTGRES_URL
 
 if (!databaseURL) {

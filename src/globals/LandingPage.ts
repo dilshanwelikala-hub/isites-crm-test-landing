@@ -31,6 +31,16 @@ export const LandingPage: GlobalConfig = {
             'Enhance your stay with curated packages, local collaborations, and memorable seasonal events.',
         },
         {
+          name: 'ctaLabel',
+          type: 'text',
+          defaultValue: 'Explore offers',
+        },
+        {
+          name: 'ctaUrl',
+          type: 'text',
+          defaultValue: '#curated',
+        },
+        {
           name: 'image',
           type: 'upload',
           relationTo: 'media',
@@ -44,9 +54,40 @@ export const LandingPage: GlobalConfig = {
       ],
     },
     {
+      name: 'alert',
+      type: 'group',
+      fields: [
+        {
+          name: 'label',
+          type: 'text',
+          defaultValue: 'New',
+        },
+        {
+          name: 'text',
+          type: 'text',
+          defaultValue: 'Demo content is editable from the CMS and published directly to this page.',
+        },
+        {
+          name: 'linkLabel',
+          type: 'text',
+          defaultValue: 'Open CMS',
+        },
+        {
+          name: 'linkUrl',
+          type: 'text',
+          defaultValue: '/admin',
+        },
+      ],
+    },
+    {
       name: 'intro',
       type: 'group',
       fields: [
+        {
+          name: 'eyebrow',
+          type: 'text',
+          defaultValue: 'Packages & Experiences',
+        },
         {
           name: 'heading',
           type: 'text',
@@ -57,6 +98,36 @@ export const LandingPage: GlobalConfig = {
           type: 'textarea',
           defaultValue:
             'From relaxed escapes to partner-led adventures, each offer is designed to make planning simple and the experience feel considered.',
+        },
+      ],
+    },
+    {
+      name: 'stats',
+      type: 'array',
+      fields: [
+        {
+          name: 'value',
+          type: 'text',
+          required: true,
+        },
+        {
+          name: 'label',
+          type: 'text',
+          required: true,
+        },
+      ],
+      defaultValue: [
+        {
+          value: '3',
+          label: 'Editable content sections',
+        },
+        {
+          value: '7',
+          label: 'Demo offers ready to publish',
+        },
+        {
+          value: 'Live',
+          label: 'CMS-powered page rendering',
         },
       ],
     },
@@ -120,9 +191,58 @@ export const LandingPage: GlobalConfig = {
       ],
     },
     {
+      name: 'feature',
+      type: 'group',
+      fields: [
+        {
+          name: 'eyebrow',
+          type: 'text',
+          defaultValue: 'Why book direct',
+        },
+        {
+          name: 'heading',
+          type: 'text',
+          defaultValue: 'A simpler way to package the whole stay',
+        },
+        {
+          name: 'body',
+          type: 'textarea',
+          defaultValue:
+            'The CMS separates page content from the design, so editors can publish polished offers without touching layout code.',
+        },
+        {
+          name: 'points',
+          type: 'array',
+          fields: [
+            {
+              name: 'item',
+              type: 'text',
+              required: true,
+            },
+          ],
+          defaultValue: [
+            {
+              item: 'Draft and publish workflow for every offer',
+            },
+            {
+              item: 'Editable SEO, hero, sections, and calls to action',
+            },
+            {
+              item: 'Ready to extend with cloud media storage and preview links',
+            },
+          ],
+        },
+      ],
+    },
+    {
       name: 'newsletter',
       type: 'group',
       fields: [
+        {
+          name: 'eyebrow',
+          type: 'text',
+          defaultValue: 'Newsletter',
+        },
         {
           name: 'heading',
           type: 'text',
@@ -137,6 +257,11 @@ export const LandingPage: GlobalConfig = {
           name: 'buttonLabel',
           type: 'text',
           defaultValue: 'Sign up',
+        },
+        {
+          name: 'buttonUrl',
+          type: 'text',
+          defaultValue: '#',
         },
       ],
     },
@@ -158,6 +283,11 @@ export const LandingPage: GlobalConfig = {
           name: 'phone',
           type: 'text',
           defaultValue: '802-878-1100',
+        },
+        {
+          name: 'email',
+          type: 'email',
+          defaultValue: 'hello@example.com',
         },
       ],
     },

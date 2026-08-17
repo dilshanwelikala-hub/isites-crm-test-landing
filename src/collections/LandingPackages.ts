@@ -46,6 +46,27 @@ export const LandingPackages: CollectionConfig = {
       ],
     },
     {
+      name: 'badge',
+      type: 'text',
+      admin: {
+        description: 'Small label shown above the offer title, for example Most Popular.',
+      },
+    },
+    {
+      name: 'priceLabel',
+      type: 'text',
+      admin: {
+        description: 'Short price text, for example From $429 or Ticketed.',
+      },
+    },
+    {
+      name: 'duration',
+      type: 'text',
+      admin: {
+        description: 'Short timing text, for example 2 nights or Half day.',
+      },
+    },
+    {
       name: 'summary',
       type: 'textarea',
       required: true,
@@ -65,6 +86,17 @@ export const LandingPackages: CollectionConfig = {
       admin: {
         description: 'Optional image URL used before a real CMS upload is added.',
       },
+    },
+    {
+      name: 'inclusions',
+      type: 'array',
+      fields: [
+        {
+          name: 'item',
+          type: 'text',
+          required: true,
+        },
+      ],
     },
     {
       name: 'primaryAction',

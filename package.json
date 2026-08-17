@@ -9,6 +9,7 @@
     "build:next": "next build",
     "start": "next start",
     "payload": "payload",
+    "seed": "node --import tsx scripts/seed-demo-content.mjs",
     "generate:types": "payload generate:types",
     "generate:importmap": "payload generate:importmap"
   },

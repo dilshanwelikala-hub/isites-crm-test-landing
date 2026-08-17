@@ -123,7 +123,8 @@ img {
 .heroContent p,
 .intro p,
 .sectionHeading p,
-.newsletter p {
+.newsletter p,
+.feature p {
   color: var(--gold);
   font-size: 0.8rem;
   font-weight: 800;
@@ -134,7 +135,8 @@ img {
 .heroContent h1,
 .intro h2,
 .sectionHeading h2,
-.newsletter h2 {
+.newsletter h2,
+.feature h2 {
   font-family: Georgia, "Times New Roman", serif;
   font-weight: 500;
   letter-spacing: 0;
@@ -157,7 +159,8 @@ img {
 
 .heroContent a,
 .button,
-.newsletter button {
+.newsletter button,
+.newsletterButton {
   align-items: center;
   display: inline-flex;
   font-size: 0.78rem;
@@ -172,6 +175,35 @@ img {
   background: var(--gold);
   color: #1f1a12;
   margin-top: 30px;
+}
+
+.alertBand {
+  align-items: center;
+  background: var(--clay);
+  color: #fff;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  justify-content: center;
+  padding: 14px clamp(20px, 5vw, 72px);
+  text-align: center;
+}
+
+.alertBand strong {
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  font-size: 0.72rem;
+  padding: 6px 9px;
+  text-transform: uppercase;
+}
+
+.alertBand span {
+  line-height: 1.5;
+}
+
+.alertBand a {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+  font-weight: 800;
 }
 
 .intro {
@@ -193,6 +225,42 @@ img {
   line-height: 1.8;
   margin-top: 20px;
   max-width: 720px;
+}
+
+.stats {
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 0 clamp(20px, 5vw, 72px);
+}
+
+.stats div {
+  border-right: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+  min-height: 132px;
+  padding: 30px clamp(18px, 3vw, 34px);
+}
+
+.stats div:first-child {
+  border-left: 1px solid var(--line);
+}
+
+.stats strong {
+  color: var(--sage-dark);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 4vw, 4.4rem);
+  font-weight: 500;
+  line-height: 0.95;
+}
+
+.stats span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .tabs {
@@ -265,11 +333,42 @@ img {
   margin: 0 0 12px;
 }
 
+.packageMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 0 !important;
+}
+
+.packageMeta span {
+  background: rgba(101, 117, 104, 0.12);
+  color: var(--sage-dark);
+  font-size: 0.7rem;
+  font-weight: 850;
+  line-height: 1;
+  padding: 8px 10px;
+  text-transform: uppercase;
+}
+
 .packageCard p,
 .partnerCard p {
   color: var(--muted);
   line-height: 1.65;
   margin: 0;
+}
+
+.inclusions {
+  color: var(--muted);
+  display: grid;
+  gap: 8px;
+  line-height: 1.5;
+  margin: 18px 0 0;
+  padding-left: 18px;
+}
+
+.inclusions li::marker {
+  color: var(--gold);
 }
 
 .partnerCard span {
@@ -320,6 +419,51 @@ img {
   align-self: center;
 }
 
+.emptyState {
+  border: 1px dashed var(--line);
+  color: var(--muted);
+  margin: 0 auto;
+  max-width: 680px;
+  padding: 28px;
+  text-align: center;
+}
+
+.feature {
+  background: var(--linen);
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 36px;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  padding: clamp(56px, 8vw, 96px) clamp(24px, 6vw, 82px);
+}
+
+.feature h2 {
+  font-size: clamp(2.2rem, 5vw, 5rem);
+  line-height: 0.98;
+}
+
+.feature span {
+  color: var(--muted);
+  display: block;
+  font-size: 1.08rem;
+  line-height: 1.8;
+}
+
+.feature ul {
+  display: grid;
+  gap: 14px;
+  list-style: none;
+  margin: 28px 0 0;
+  padding: 0;
+}
+
+.feature li {
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+  font-weight: 750;
+  padding-top: 14px;
+}
+
 .newsletter {
   align-items: end;
   background: var(--sage-dark);
@@ -360,6 +504,11 @@ img {
   cursor: pointer;
 }
 
+.newsletterButton {
+  background: var(--gold);
+  color: #1f1a12;
+}
+
 .footer {
   align-items: center;
   background: #191a17;
@@ -392,6 +541,7 @@ img {
 
   .intro,
   .newsletter,
+  .feature,
   .partnerCard {
     grid-template-columns: 1fr;
   }
@@ -402,6 +552,16 @@ img {
 
   .tabs {
     position: static;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .stats div,
+  .stats div:first-child {
+    border-left: 0;
+    border-right: 0;
   }
 }
 
