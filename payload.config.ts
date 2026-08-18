@@ -20,6 +20,9 @@ const databaseURL = process.env.DATABASE_URL || process.env.POSTGRES_URL
 
 export default buildConfig({
   admin: {
+    components: {
+      beforeDashboard: ['./src/components/admin/WebflowDashboard.tsx'],
+    },
     routes: {
       account: '/account',
       createFirstUser: '/create-first-user',
