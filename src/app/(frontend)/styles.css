@@ -206,6 +206,17 @@ img {
   font-weight: 800;
 }
 
+.previewBanner {
+  background: #1468ff;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  padding: 10px clamp(20px, 4vw, 54px);
+  text-align: center;
+  text-transform: uppercase;
+}
+
 .intro {
   display: grid;
   gap: 22px;

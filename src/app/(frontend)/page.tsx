@@ -12,29 +12,47 @@ import {
 
 export const dynamic = 'force-dynamic'
 
+type SearchParams = Record<string, string | string[] | undefined>
+
 function siteURL() {
   return (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
 }
 
-async function getLandingData() {
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value
+}
+
+function previewEnabled(searchParams: SearchParams = {}) {
+  const token = process.env.PREVIEW_SECRET || process.env.PAYLOAD_SECRET
+
+  return Boolean(
+    token &&
+      firstParam(searchParams.preview) === 'true' &&
+      firstParam(searchParams.previewToken) === token,
+  )
+}
+
+async function getLandingData(isPreview = false) {
   try {
     const payload = await getPayload({ config })
     const landingPage = await payload.findGlobal({
       slug: 'landing-page',
       depth: 2,
-      draft: false,
+      draft: isPreview,
     })
     const packages = await payload.find({
       collection: 'landing-packages',
       depth: 2,
-      draft: false,
+      draft: isPreview,
       limit: 50,
       sort: 'displayOrder',
-      where: {
-        _status: {
-          equals: 'published',
-        },
-      },
+      where: isPreview
+        ? undefined
+        : {
+            _status: {
+              equals: 'published',
+            },
+          },
     })
 
     return {
@@ -137,8 +155,14 @@ function PackageInclusions({ item }: { item: LandingPackage }) {
   )
 }
 
-export default async function Page() {
-  const { content, packages } = await getLandingData()
+export default async function Page({
+  searchParams,
+}: {
+  searchParams?: Promise<SearchParams>
+}) {
+  const resolvedSearchParams = searchParams ? await searchParams : {}
+  const isPreview = previewEnabled(resolvedSearchParams)
+  const { content, packages } = await getLandingData(isPreview)
   const sections = content.sections?.length ? content.sections : defaultContent.sections || []
   const stats = content.stats?.length ? content.stats : defaultContent.stats || []
   const heroImage =
@@ -147,6 +171,7 @@ export default async function Page() {
 
   return (
     <main>
+      {isPreview ? <div className="previewBanner">Draft preview mode</div> : null}
       <header className="siteHeader">
         <a className="brand" href="/">
           {content.footer?.brand || defaultContent.footer?.brand}

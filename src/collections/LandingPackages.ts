@@ -1,5 +1,13 @@
 import type { CollectionConfig } from 'payload'
 
+function siteURL() {
+  return (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
+}
+
+function previewToken() {
+  return process.env.PREVIEW_SECRET || process.env.PAYLOAD_SECRET
+}
+
 export const LandingPackages: CollectionConfig = {
   slug: 'landing-packages',
   access: {
@@ -8,6 +16,15 @@ export const LandingPackages: CollectionConfig = {
   admin: {
     defaultColumns: ['title', 'category', 'displayOrder', '_status'],
     group: 'Landing Page',
+    preview: (doc) => {
+      const token = previewToken()
+
+      if (!token || typeof doc.slug !== 'string') {
+        return null
+      }
+
+      return `${siteURL()}/packages/${doc.slug}?preview=true&previewToken=${encodeURIComponent(token)}`
+    },
     useAsTitle: 'title',
   },
   fields: [

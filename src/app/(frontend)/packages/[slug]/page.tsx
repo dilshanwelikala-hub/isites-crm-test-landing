@@ -13,34 +13,55 @@ type Args = {
   params: Promise<{
     slug: string
   }>
+  searchParams?: Promise<Record<string, string | string[] | undefined>>
 }
 
 function siteURL() {
   return (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
 }
 
-async function findPackage(slug: string): Promise<LandingPackage | null> {
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value
+}
+
+function previewEnabled(searchParams: Record<string, string | string[] | undefined> = {}) {
+  const token = process.env.PREVIEW_SECRET || process.env.PAYLOAD_SECRET
+
+  return Boolean(
+    token &&
+      firstParam(searchParams.preview) === 'true' &&
+      firstParam(searchParams.previewToken) === token,
+  )
+}
+
+async function findPackage(slug: string, isPreview = false): Promise<LandingPackage | null> {
   try {
     const payload = await getPayload({ config })
     const result = await payload.find({
       collection: 'landing-packages',
       depth: 2,
-      draft: false,
+      draft: isPreview,
       limit: 1,
-      where: {
-        and: [
-          {
+      where: isPreview
+        ? {
             slug: {
               equals: slug,
             },
+          }
+        : {
+            and: [
+              {
+                slug: {
+                  equals: slug,
+                },
+              },
+              {
+                _status: {
+                  equals: 'published',
+                },
+              },
+            ],
           },
-          {
-            _status: {
-              equals: 'published',
-            },
-          },
-        ],
-      },
     })
 
     if (result.docs[0]) {
@@ -92,9 +113,11 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
   }
 }
 
-export default async function PackagePage({ params }: Args) {
+export default async function PackagePage({ params, searchParams }: Args) {
   const { slug } = await params
-  const item = await findPackage(slug)
+  const resolvedSearchParams = searchParams ? await searchParams : {}
+  const isPreview = previewEnabled(resolvedSearchParams)
+  const item = await findPackage(slug, isPreview)
 
   if (!item) {
     notFound()
@@ -104,6 +127,7 @@ export default async function PackagePage({ params }: Args) {
 
   return (
     <main>
+      {isPreview ? <div className="previewBanner">Draft preview mode</div> : null}
       <header className="siteHeader">
         <a className="brand" href="/">
           {defaultContent.footer?.brand}
@@ -149,7 +173,7 @@ export default async function PackagePage({ params }: Args) {
 
         <aside>
           <h2>Ask about this offer</h2>
-          <InquiryForm packageTitle={item.title} />
+          <InquiryForm packageSlug={item.slug} packageTitle={item.title} />
         </aside>
       </section>
     </main>

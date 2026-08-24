@@ -17,6 +17,11 @@ const quickActions = [
     description: 'New leads submitted from package pages.',
   },
   {
+    label: 'View contacts',
+    href: '/admin/collections/contacts',
+    description: 'People created automatically from package inquiries.',
+  },
+  {
     label: 'Upload media',
     href: '/admin/collections/media',
     description: 'Images, alt text, captions, and gallery assets.',
@@ -28,10 +33,34 @@ const workflow = [
   'Save draft',
   'Preview the public page',
   'Publish changes',
+  'Qualify incoming leads',
+]
+
+const pipelineStages = [
+  {
+    label: 'New',
+    value: 'new',
+  },
+  {
+    label: 'Contacted',
+    value: 'contacted',
+  },
+  {
+    label: 'Qualified',
+    value: 'qualified',
+  },
+  {
+    label: 'Proposal Sent',
+    value: 'proposal_sent',
+  },
+  {
+    label: 'Won',
+    value: 'won',
+  },
 ]
 
 export default async function WebflowDashboard({ payload }: ServerProps) {
-  const [packages, inquiries, media] = await Promise.all([
+  const [packages, inquiries, contacts, media, ...pipelineCounts] = await Promise.all([
     payload.count({
       collection: 'landing-packages',
     }),
@@ -39,9 +68,26 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
       collection: 'inquiries',
     }),
     payload.count({
+      collection: 'contacts',
+    }),
+    payload.count({
       collection: 'media',
     }),
+    ...pipelineStages.map((stage) =>
+      payload.count({
+        collection: 'inquiries',
+        where: {
+          status: {
+            equals: stage.value,
+          },
+        },
+      }),
+    ),
   ])
+  const pipeline = pipelineStages.map((stage, index) => ({
+    ...stage,
+    total: pipelineCounts[index]?.totalDocs || 0,
+  }))
 
   return (
     <section className="wf-dashboard">
@@ -64,7 +110,7 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
           <h2>Manage the landing page like a focused Webflow CMS workspace.</h2>
           <span>
             Use the shortcuts below for page content, CMS collections, assets, and incoming leads.
-            The public site reads from the same content records.
+            Draft previews and lead tracking now live inside the same workspace.
           </span>
         </div>
         <div className="wf-dashboard__status">
@@ -87,8 +133,31 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
           <span>Inquiries</span>
         </div>
         <div>
+          <strong>{contacts.totalDocs}</strong>
+          <span>Contacts</span>
+        </div>
+        <div>
           <strong>{media.totalDocs}</strong>
           <span>Media assets</span>
+        </div>
+      </div>
+
+      <div className="wf-dashboard__pipeline">
+        <div>
+          <p className="wf-dashboard__eyebrow">Lead pipeline</p>
+          <h3>Inquiry follow-up status</h3>
+        </div>
+        <div className="wf-dashboard__pipeline-list">
+          {pipeline.map((stage) => (
+            <a
+              className="wf-dashboard__pipeline-item"
+              href={`/admin/collections/inquiries?where[status][equals]=${stage.value}`}
+              key={stage.value}
+            >
+              <span>{stage.label}</span>
+              <strong>{stage.total}</strong>
+            </a>
+          ))}
         </div>
       </div>
 

@@ -1,5 +1,13 @@
 import type { GlobalConfig } from 'payload'
 
+function siteURL() {
+  return (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
+}
+
+function previewToken() {
+  return process.env.PREVIEW_SECRET || process.env.PAYLOAD_SECRET
+}
+
 export const LandingPage: GlobalConfig = {
   slug: 'landing-page',
   access: {
@@ -7,6 +15,15 @@ export const LandingPage: GlobalConfig = {
   },
   admin: {
     group: 'Landing Page',
+    preview: () => {
+      const token = previewToken()
+
+      if (!token) {
+        return null
+      }
+
+      return `${siteURL()}/?preview=true&previewToken=${encodeURIComponent(token)}`
+    },
   },
   fields: [
     {

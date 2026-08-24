@@ -4,7 +4,12 @@ import { useState } from 'react'
 
 type FormState = 'idle' | 'sending' | 'sent' | 'error'
 
-export function InquiryForm({ packageTitle }: { packageTitle?: string }) {
+type InquiryFormProps = {
+  packageSlug?: string
+  packageTitle?: string
+}
+
+export function InquiryForm({ packageSlug, packageTitle }: InquiryFormProps) {
   const [state, setState] = useState<FormState>('idle')
 
   async function submitInquiry(formData: FormData) {
@@ -15,6 +20,7 @@ export function InquiryForm({ packageTitle }: { packageTitle?: string }) {
       email: String(formData.get('email') || ''),
       phone: String(formData.get('phone') || ''),
       message: String(formData.get('message') || ''),
+      packageSlug,
       packageTitle,
       status: 'new',
     }

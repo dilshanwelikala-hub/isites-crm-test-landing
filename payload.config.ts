@@ -8,6 +8,7 @@ import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import { buildConfig } from 'payload'
 import sharp from 'sharp'
 
+import { Contacts } from './src/collections/Contacts'
 import { Inquiries } from './src/collections/Inquiries'
 import { LandingPackages } from './src/collections/LandingPackages'
 import { Media } from './src/collections/Media'
@@ -38,7 +39,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, LandingPackages, Inquiries],
+  collections: [Users, Media, LandingPackages, Contacts, Inquiries],
   db: databaseURL
     ? postgresAdapter({
         pool: {
