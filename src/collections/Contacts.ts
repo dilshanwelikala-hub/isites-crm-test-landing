@@ -9,7 +9,7 @@ export const Contacts: CollectionConfig = {
     delete: ({ req: { user } }) => Boolean(user),
   },
   admin: {
-    defaultColumns: ['name', 'email', 'phone', 'lastInquiryAt'],
+    defaultColumns: ['name', 'email', 'phone', 'lifecycleStage', 'lastInquiryAt'],
     group: 'Lead Management',
     useAsTitle: 'name',
   },
@@ -28,6 +28,69 @@ export const Contacts: CollectionConfig = {
     {
       name: 'phone',
       type: 'text',
+    },
+    {
+      name: 'company',
+      type: 'text',
+      admin: {
+        description: 'Optional company or group name for corporate, wedding, or event leads.',
+      },
+    },
+    {
+      name: 'lifecycleStage',
+      type: 'select',
+      defaultValue: 'lead',
+      options: [
+        {
+          label: 'Lead',
+          value: 'lead',
+        },
+        {
+          label: 'Qualified Lead',
+          value: 'qualified_lead',
+        },
+        {
+          label: 'Customer',
+          value: 'customer',
+        },
+        {
+          label: 'Past Customer',
+          value: 'past_customer',
+        },
+      ],
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'preferredChannel',
+      type: 'select',
+      defaultValue: 'email',
+      options: [
+        {
+          label: 'Email',
+          value: 'email',
+        },
+        {
+          label: 'Phone',
+          value: 'phone',
+        },
+        {
+          label: 'Either',
+          value: 'either',
+        },
+      ],
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'owner',
+      type: 'relationship',
+      relationTo: 'users',
+      admin: {
+        position: 'sidebar',
+      },
     },
     {
       name: 'leadSource',

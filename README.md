@@ -10,6 +10,7 @@ This is a simple editable landing page prototype built with Next.js and Payload 
 - Editable package cards with draft/published workflow
 - Draft preview links for homepage and package edits
 - Basic lead/contact management from package inquiry forms
+- CRM-style dashboard with pipeline stages, recent leads, and follow-up indicators
 - Local media uploads
 - Local SQLite database for the first test build
 - Hosted Postgres support for Vercel deployments
@@ -62,6 +63,7 @@ npm run seed
 ```
 
 The seed command publishes the landing page settings and the sample offers. It can also update existing seeded records by slug.
+It also adds sample inquiries so the lead dashboard has realistic demo data.
 
 ## Vercel database
 

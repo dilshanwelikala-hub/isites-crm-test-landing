@@ -645,6 +645,17 @@ img {
   text-transform: uppercase;
 }
 
+.inquiryForm .inquiryFormConsent {
+  align-items: center;
+  color: var(--ink);
+  display: flex;
+  font-size: 0.86rem;
+  font-weight: 700;
+  gap: 10px;
+  line-height: 1.4;
+  text-transform: none;
+}
+
 .inquiryForm input,
 .inquiryForm textarea {
   background: #fff;
@@ -654,6 +665,12 @@ img {
   min-height: 46px;
   padding: 12px;
   text-transform: none;
+}
+
+.inquiryForm input[type='checkbox'] {
+  accent-color: var(--sage-dark);
+  min-height: auto;
+  width: 18px;
 }
 
 .inquiryForm textarea {
