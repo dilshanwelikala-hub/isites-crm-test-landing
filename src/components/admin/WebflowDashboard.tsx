@@ -12,7 +12,22 @@ type LeadCard = {
   priority?: string | null
 }
 
+type SiteCard = {
+  id: number | string
+  name?: string | null
+  primaryDomain?: string | null
+  slug?: string | null
+  status?: string | null
+  template?: string | null
+  updatedAt?: string | null
+}
+
 const quickActions = [
+  {
+    label: 'Create site',
+    href: '/admin/collections/sites/create',
+    description: 'Add a client website using the current landing template.',
+  },
   {
     label: 'Edit homepage',
     href: '/admin/globals/landing-page',
@@ -123,13 +138,35 @@ function nextStepLabel(value?: string | null) {
   return value ? labels[value] || value : 'Reply to lead'
 }
 
+function templateLabel(value?: string | null) {
+  const labels: Record<string, string> = {
+    resort: 'Resort / Hotel',
+    restaurant: 'Restaurant',
+    event: 'Event / Venue',
+    service: 'Service Business',
+  }
+
+  return value ? labels[value] || value : 'Template'
+}
+
 export default async function WebflowDashboard({ payload }: ServerProps) {
   const now = new Date().toISOString()
   const dueFollowUpHref = `/admin/collections/inquiries?where%5BfollowUpAt%5D%5Bless_than_equal%5D=${encodeURIComponent(
     now,
   )}`
-  const [packages, inquiries, contacts, media, followUpsDue, highPriority, recentInquiries] =
+  const [sites, liveSites, packages, inquiries, contacts, media, followUpsDue, highPriority, recentInquiries, recentSites] =
     await Promise.all([
+      payload.count({
+        collection: 'sites',
+      }),
+      payload.count({
+        collection: 'sites',
+        where: {
+          status: {
+            equals: 'live',
+          },
+        },
+      }),
       payload.count({
         collection: 'landing-packages',
       }),
@@ -174,6 +211,12 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
         limit: 5,
         sort: '-createdAt',
       }),
+      payload.find({
+        collection: 'sites',
+        depth: 0,
+        limit: 4,
+        sort: '-updatedAt',
+      }),
     ])
 
   const [pipelineCounts, pipelineLeadResults] = await Promise.all([
@@ -212,6 +255,7 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
     total: pipelineCounts[index]?.totalDocs || 0,
   }))
   const recentLeads = recentInquiries.docs as LeadCard[]
+  const siteCards = recentSites.docs as SiteCard[]
 
   return (
     <section className="wf-dashboard">
@@ -249,6 +293,14 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
 
       <div className="wf-dashboard__metrics" aria-label="CMS totals">
         <div>
+          <strong>{sites.totalDocs}</strong>
+          <span>Total sites</span>
+        </div>
+        <div>
+          <strong>{liveSites.totalDocs}</strong>
+          <span>Live sites</span>
+        </div>
+        <div>
           <strong>{packages.totalDocs}</strong>
           <span>Packages</span>
         </div>
@@ -264,6 +316,34 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
           <strong>{media.totalDocs}</strong>
           <span>Media assets</span>
         </div>
+      </div>
+
+      <div className="wf-dashboard__sites">
+        <div>
+          <p className="wf-dashboard__eyebrow">Sites</p>
+          <h3>Multi-site workspace</h3>
+        </div>
+        {siteCards.length ? (
+          <div className="wf-dashboard__site-list">
+            {siteCards.map((site) => (
+              <a className="wf-dashboard__site-card" href={`/admin/collections/sites/${site.id}`} key={site.id}>
+                <strong>{site.name || site.slug || 'Untitled site'}</strong>
+                <span>{site.primaryDomain || `/sites/${site.slug}`}</span>
+                <footer>
+                  <small>{templateLabel(site.template)}</small>
+                  <small>{site.status || 'draft'}</small>
+                  {site.slug ? <small>Preview: /sites/{site.slug}</small> : null}
+                </footer>
+              </a>
+            ))}
+          </div>
+        ) : (
+          <div className="wf-dashboard__empty-panel">
+            <strong>No sites created yet.</strong>
+            <span>Create the first client site, then assign packages and leads to it.</span>
+            <a href="/admin/collections/sites/create">Create site</a>
+          </div>
+        )}
       </div>
 
       <div className="wf-dashboard__focus-grid">

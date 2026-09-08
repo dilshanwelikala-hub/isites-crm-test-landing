@@ -14,7 +14,7 @@ export const LandingPackages: CollectionConfig = {
     read: () => true,
   },
   admin: {
-    defaultColumns: ['title', 'category', 'displayOrder', '_status'],
+    defaultColumns: ['title', 'site', 'category', 'displayOrder', '_status'],
     group: 'Landing Page',
     preview: (doc) => {
       const token = previewToken()
@@ -23,11 +23,26 @@ export const LandingPackages: CollectionConfig = {
         return null
       }
 
+      if (doc.site && typeof doc.site === 'object' && 'slug' in doc.site && typeof doc.site.slug === 'string') {
+        return `${siteURL()}/sites/${doc.site.slug}/packages/${doc.slug}?preview=true&previewToken=${encodeURIComponent(
+          token,
+        )}`
+      }
+
       return `${siteURL()}/packages/${doc.slug}?preview=true&previewToken=${encodeURIComponent(token)}`
     },
     useAsTitle: 'title',
   },
   fields: [
+    {
+      name: 'site',
+      type: 'relationship',
+      relationTo: 'sites',
+      admin: {
+        description: 'Assign this package to a specific website. Leave empty for the default demo site.',
+        position: 'sidebar',
+      },
+    },
     {
       name: 'title',
       type: 'text',
@@ -37,7 +52,6 @@ export const LandingPackages: CollectionConfig = {
       name: 'slug',
       type: 'text',
       required: true,
-      unique: true,
       admin: {
         description: 'Short URL-friendly identifier, for example rise-and-renew.',
       },

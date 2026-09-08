@@ -1,4 +1,22 @@
-import type { CollectionBeforeChangeHook, CollectionConfig } from 'payload'
+import type { CollectionBeforeChangeHook, CollectionConfig, Where } from 'payload'
+
+function relationshipID(value: unknown) {
+  if (value && typeof value === 'object' && 'id' in value) {
+    return relationshipID((value as { id: unknown }).id)
+  }
+
+  if (typeof value === 'number') {
+    return value
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+
+    return Number.isFinite(parsed) ? parsed : undefined
+  }
+
+  return undefined
+}
 
 const connectInquiry: CollectionBeforeChangeHook = async ({ data, operation, req }) => {
   if (operation !== 'create') {
@@ -11,15 +29,33 @@ const connectInquiry: CollectionBeforeChangeHook = async ({ data, operation, req
     return data
   }
 
+  const siteID = relationshipID(data.site)
+  const contactWhere: Where = siteID
+    ? {
+        and: [
+          {
+            email: {
+              equals: email,
+            },
+          },
+          {
+            site: {
+              equals: siteID,
+            },
+          },
+        ],
+      }
+    : {
+        email: {
+          equals: email,
+        },
+      }
+
   const contacts = await req.payload.find({
     collection: 'contacts',
     limit: 1,
     overrideAccess: true,
-    where: {
-      email: {
-        equals: email,
-      },
-    },
+    where: contactWhere,
   })
 
   const contactData = {
@@ -27,6 +63,7 @@ const connectInquiry: CollectionBeforeChangeHook = async ({ data, operation, req
     name: data.name,
     phone: data.phone,
     company: data.company,
+    site: siteID,
     lastInquiryAt: new Date().toISOString(),
     lifecycleStage: 'lead' as const,
     preferredChannel: data.phone ? ('either' as const) : ('email' as const),
@@ -55,15 +92,32 @@ const connectInquiry: CollectionBeforeChangeHook = async ({ data, operation, req
   }
 
   if (data.packageSlug && !data.package) {
+    const packageWhere: Where = siteID
+      ? {
+          and: [
+            {
+              slug: {
+                equals: data.packageSlug,
+              },
+            },
+            {
+              site: {
+                equals: siteID,
+              },
+            },
+          ],
+        }
+      : {
+          slug: {
+            equals: data.packageSlug,
+          },
+        }
+
     const packages = await req.payload.find({
       collection: 'landing-packages',
       limit: 1,
       overrideAccess: true,
-      where: {
-        slug: {
-          equals: data.packageSlug,
-        },
-      },
+      where: packageWhere,
     })
 
     if (packages.docs[0]?.id) {
@@ -88,6 +142,15 @@ export const Inquiries: CollectionConfig = {
     useAsTitle: 'name',
   },
   fields: [
+    {
+      name: 'site',
+      type: 'relationship',
+      relationTo: 'sites',
+      admin: {
+        description: 'Website this inquiry belongs to.',
+        position: 'sidebar',
+      },
+    },
     {
       name: 'name',
       type: 'text',

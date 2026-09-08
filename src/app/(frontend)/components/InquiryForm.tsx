@@ -7,9 +7,10 @@ type FormState = 'idle' | 'sending' | 'sent' | 'error'
 type InquiryFormProps = {
   packageSlug?: string
   packageTitle?: string
+  siteId?: number | string
 }
 
-export function InquiryForm({ packageSlug, packageTitle }: InquiryFormProps) {
+export function InquiryForm({ packageSlug, packageTitle, siteId }: InquiryFormProps) {
   const [state, setState] = useState<FormState>('idle')
 
   async function submitInquiry(formData: FormData) {
@@ -24,6 +25,7 @@ export function InquiryForm({ packageSlug, packageTitle }: InquiryFormProps) {
       message: String(formData.get('message') || ''),
       packageSlug,
       packageTitle,
+      site: siteId,
       consentToContact: formData.get('consentToContact') === 'on',
       sourcePageUrl: window.location.href,
       status: 'new',

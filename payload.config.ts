@@ -12,6 +12,7 @@ import { Contacts } from './src/collections/Contacts'
 import { Inquiries } from './src/collections/Inquiries'
 import { LandingPackages } from './src/collections/LandingPackages'
 import { Media } from './src/collections/Media'
+import { Sites } from './src/collections/Sites'
 import { Users } from './src/collections/Users'
 import { LandingPage } from './src/globals/LandingPage'
 
@@ -39,7 +40,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, LandingPackages, Contacts, Inquiries],
+  collections: [Users, Sites, Media, LandingPackages, Contacts, Inquiries],
   db: databaseURL
     ? postgresAdapter({
         pool: {

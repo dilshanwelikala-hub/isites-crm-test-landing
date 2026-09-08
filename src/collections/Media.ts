@@ -12,9 +12,19 @@ export const Media: CollectionConfig = {
     read: () => true,
   },
   admin: {
+    group: 'Assets',
     useAsTitle: 'alt',
   },
   fields: [
+    {
+      name: 'site',
+      type: 'relationship',
+      relationTo: 'sites',
+      admin: {
+        description: 'Optional site owner for this media item.',
+        position: 'sidebar',
+      },
+    },
     {
       name: 'alt',
       type: 'text',

@@ -1,11 +1,13 @@
 # Test Landing CMS
 
-This is a simple editable landing page prototype built with Next.js and Payload CMS.
+This is a multi-site Web CMS prototype built with Next.js and Payload CMS.
 
 ## What it includes
 
 - Public landing page at `/`
+- Multi-site public pages at `/sites/[siteSlug]`
 - Payload admin panel at `/admin`
+- Sites collection for managing multiple client websites
 - Editable landing page global content
 - Editable package cards with draft/published workflow
 - Draft preview links for homepage and package edits
@@ -46,13 +48,16 @@ This is a simple editable landing page prototype built with Next.js and Payload 
 In the admin panel:
 
 - Edit the overall page copy under `Globals > Landing Page`
+- Create and manage client websites under `Sites > Sites`
 - Add package cards under `Landing Page > Landing Packages`
+- Assign package cards, media, inquiries, and contacts to a site when they belong to a client website
 - Set package records to `Published` to show them on the public page
 - Upload images under `Media`
 - Review incoming leads under `Lead Management > Inquiries`
 - View automatically created contacts under `Lead Management > Contacts`
 
-The public page includes fallback content so it looks complete before CMS records are added.
+The default public page includes fallback content so it looks complete before CMS records are added.
+Site records can be viewed at `/sites/[siteSlug]`, for example `/sites/test-resort` after seeding demo data.
 
 ## Demo content
 
@@ -62,8 +67,7 @@ To populate the CMS with the packaged demo content, run:
 npm run seed
 ```
 
-The seed command publishes the landing page settings and the sample offers. It can also update existing seeded records by slug.
-It also adds sample inquiries so the lead dashboard has realistic demo data.
+The seed command publishes the default landing page settings, creates a demo site at `/sites/test-resort`, adds site-specific package records, and adds sample inquiries so the lead dashboard has realistic demo data.
 
 ## Vercel database
 
@@ -91,7 +95,7 @@ Set a preview token locally and in Vercel:
 PREVIEW_SECRET
 ```
 
-Editors can use Payload's Preview action from the homepage global or package records. Preview URLs include the token and show draft content without exposing drafts to normal visitors.
+Editors can use Payload's Preview action from the homepage global, site records, or package records. Preview URLs include the token and show draft content without exposing drafts to normal visitors.
 
 ## Hosted media uploads
 

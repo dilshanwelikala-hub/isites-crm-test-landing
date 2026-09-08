@@ -21,14 +21,55 @@ await payload.updateGlobal({
   },
 })
 
+const siteSlug = 'test-resort'
+const siteResult = await payload.find({
+  collection: 'sites',
+  limit: 1,
+  where: {
+    slug: {
+      equals: siteSlug,
+    },
+  },
+})
+const siteData = {
+  ...defaultContent,
+  name: 'The Test Resort',
+  slug: siteSlug,
+  status: 'live',
+  template: 'resort',
+  primaryDomain: '',
+  _status: 'published',
+}
+const demoSite = siteResult.docs[0]
+  ? await payload.update({
+      collection: 'sites',
+      id: siteResult.docs[0].id,
+      data: siteData,
+      overrideAccess: true,
+    })
+  : await payload.create({
+      collection: 'sites',
+      data: siteData,
+      overrideAccess: true,
+    })
+
 for (const [index, offer] of defaultPackages.entries()) {
   const existing = await payload.find({
     collection: 'landing-packages',
     limit: 1,
     where: {
-      slug: {
-        equals: offer.slug,
-      },
+      and: [
+        {
+          slug: {
+            equals: offer.slug,
+          },
+        },
+        {
+          site: {
+            exists: false,
+          },
+        },
+      ],
     },
   })
 
@@ -53,8 +94,53 @@ for (const [index, offer] of defaultPackages.entries()) {
   }
 }
 
+for (const [index, offer] of defaultPackages.entries()) {
+  const existing = await payload.find({
+    collection: 'landing-packages',
+    limit: 1,
+    where: {
+      and: [
+        {
+          slug: {
+            equals: offer.slug,
+          },
+        },
+        {
+          site: {
+            equals: demoSite.id,
+          },
+        },
+      ],
+    },
+  })
+
+  const data = {
+    ...offer,
+    site: demoSite.id,
+    displayOrder: index + 1,
+    featured: index < 3,
+    _status: 'published',
+  }
+
+  if (existing.docs[0]) {
+    await payload.update({
+      collection: 'landing-packages',
+      id: existing.docs[0].id,
+      data,
+      overrideAccess: true,
+    })
+  } else {
+    await payload.create({
+      collection: 'landing-packages',
+      data,
+      overrideAccess: true,
+    })
+  }
+}
+
 const demoInquiries = [
   {
+    site: demoSite.id,
     name: 'Amelia Carter',
     email: 'amelia.carter@example.com',
     phone: '802-555-0174',
@@ -70,9 +156,10 @@ const demoInquiries = [
     followUpAt: dateFromNow(0),
     estimatedValue: 860,
     consentToContact: true,
-    sourcePageUrl: '/packages/rise-and-renew',
+    sourcePageUrl: `/sites/${siteSlug}/packages/rise-and-renew`,
   },
   {
+    site: demoSite.id,
     name: 'Noah Bennett',
     email: 'noah.bennett@example.com',
     phone: '802-555-0138',
@@ -89,9 +176,10 @@ const demoInquiries = [
     lastContactedAt: dateFromNow(-1),
     estimatedValue: 2400,
     consentToContact: true,
-    sourcePageUrl: '/packages/chef-for-a-day',
+    sourcePageUrl: `/sites/${siteSlug}/packages/chef-for-a-day`,
   },
   {
+    site: demoSite.id,
     name: 'Sophia Green',
     email: 'sophia.green@example.com',
     phone: '802-555-0199',
@@ -106,9 +194,10 @@ const demoInquiries = [
     followUpAt: dateFromNow(1),
     estimatedValue: 720,
     consentToContact: true,
-    sourcePageUrl: '/packages/garden-dinner-series',
+    sourcePageUrl: `/sites/${siteSlug}/packages/garden-dinner-series`,
   },
   {
+    site: demoSite.id,
     name: 'Ethan Moore',
     email: 'ethan.moore@example.com',
     packageSlug: 'autumn-harvest-weekend',
@@ -123,7 +212,7 @@ const demoInquiries = [
     lastContactedAt: dateFromNow(-2),
     estimatedValue: 980,
     consentToContact: true,
-    sourcePageUrl: '/packages/autumn-harvest-weekend',
+    sourcePageUrl: `/sites/${siteSlug}/packages/autumn-harvest-weekend`,
   },
 ]
 
@@ -133,6 +222,11 @@ for (const inquiry of demoInquiries) {
     limit: 1,
     where: {
       and: [
+        {
+          site: {
+            equals: demoSite.id,
+          },
+        },
         {
           email: {
             equals: inquiry.email,

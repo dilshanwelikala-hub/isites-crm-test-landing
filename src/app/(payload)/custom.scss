@@ -190,7 +190,7 @@ body {
 .wf-dashboard__grid {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
 }
 
 .wf-dashboard__metrics div,
@@ -219,7 +219,7 @@ body {
 }
 
 .wf-dashboard__grid {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
 }
 
 .wf-dashboard__card {
@@ -237,6 +237,92 @@ body {
 .wf-dashboard__card strong {
   color: #f6f6f8;
   font-size: 1rem;
+}
+
+.wf-dashboard__sites {
+  background: #101013;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+}
+
+.wf-dashboard__sites h3 {
+  font-size: clamp(1.25rem, 2vw, 2rem);
+  letter-spacing: 0;
+  line-height: 1.05;
+  margin: 0;
+}
+
+.wf-dashboard__site-list {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.wf-dashboard__site-card,
+.wf-dashboard__empty-panel {
+  background: #17171a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  min-height: 150px;
+  padding: 16px;
+  text-decoration: none;
+}
+
+.wf-dashboard__site-card:hover,
+.wf-dashboard__empty-panel a:hover {
+  border-color: rgba(20, 104, 255, 0.72);
+}
+
+.wf-dashboard__site-card strong,
+.wf-dashboard__empty-panel strong {
+  color: #f6f6f8;
+  font-size: 1rem;
+}
+
+.wf-dashboard__site-card > span,
+.wf-dashboard__empty-panel span {
+  color: #a7a7b2;
+  line-height: 1.5;
+}
+
+.wf-dashboard__site-card footer {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.wf-dashboard__site-card small {
+  background: rgba(20, 104, 255, 0.13);
+  border: 1px solid rgba(20, 104, 255, 0.2);
+  border-radius: 999px;
+  color: #dcdce2;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 4px 7px;
+  text-transform: uppercase;
+}
+
+.wf-dashboard__empty-panel a {
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: #f6f6f8;
+  display: inline-flex;
+  font-size: 0.76rem;
+  font-weight: 800;
+  justify-content: center;
+  max-width: 132px;
+  min-height: 34px;
+  padding: 8px 10px;
+  text-decoration: none;
+  text-transform: uppercase;
 }
 
 .wf-dashboard__focus-grid {

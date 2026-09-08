@@ -11,21 +11,102 @@ function siteURL() {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let slugs = defaultPackages.map((item) => item.slug).filter(Boolean) as string[]
+  let siteEntries: MetadataRoute.Sitemap = []
 
   try {
     const payload = await getPayload({ config })
-    const packages = await payload.find({
+    const rootPackages = await payload.find({
       collection: 'landing-packages',
+      depth: 1,
       draft: false,
       limit: 100,
       where: {
-        _status: {
-          equals: 'published',
-        },
+        and: [
+          {
+            site: {
+              exists: false,
+            },
+          },
+          {
+            _status: {
+              equals: 'published',
+            },
+          },
+        ],
+      },
+    })
+    const sitePackagesResult = await payload.find({
+      collection: 'landing-packages',
+      depth: 1,
+      draft: false,
+      limit: 500,
+      where: {
+        and: [
+          {
+            site: {
+              exists: true,
+            },
+          },
+          {
+            _status: {
+              equals: 'published',
+            },
+          },
+        ],
+      },
+    })
+    const sites = await payload.find({
+      collection: 'sites',
+      draft: false,
+      limit: 100,
+      where: {
+        and: [
+          {
+            status: {
+              equals: 'live',
+            },
+          },
+          {
+            _status: {
+              equals: 'published',
+            },
+          },
+        ],
       },
     })
 
-    slugs = packages.docs.map((item) => item.slug).filter(Boolean)
+    slugs = rootPackages.docs.map((item) => item.slug).filter(Boolean)
+    siteEntries = sites.docs.flatMap((site) => {
+      const siteSlug = site.slug
+
+      if (!siteSlug) {
+        return []
+      }
+
+      const sitePackages = sitePackagesResult.docs
+        .filter((item) => {
+          const itemSite = item.site
+
+          return typeof itemSite === 'object' && itemSite?.id === site.id
+        })
+        .map((item) => item.slug)
+        .filter(Boolean)
+
+      return [
+        {
+          url: `${siteURL()}/sites/${siteSlug}`,
+          lastModified: new Date(),
+          changeFrequency: 'weekly' as const,
+          priority: 0.9,
+        },
+        ...sitePackages.map((slug) => ({
+          url: `${siteURL()}/sites/${siteSlug}/packages/${slug}`,
+          lastModified: new Date(),
+          changeFrequency: 'monthly' as const,
+          priority: 0.7,
+        })),
+      ]
+    })
   } catch {
     // Keep fallback demo package URLs in the sitemap.
   }
@@ -43,5 +124,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly' as const,
       priority: 0.7,
     })),
+    ...siteEntries,
   ]
 }

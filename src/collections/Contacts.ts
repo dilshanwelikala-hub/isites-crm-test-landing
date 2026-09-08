@@ -9,11 +9,20 @@ export const Contacts: CollectionConfig = {
     delete: ({ req: { user } }) => Boolean(user),
   },
   admin: {
-    defaultColumns: ['name', 'email', 'phone', 'lifecycleStage', 'lastInquiryAt'],
+    defaultColumns: ['name', 'site', 'email', 'phone', 'lifecycleStage', 'lastInquiryAt'],
     group: 'Lead Management',
     useAsTitle: 'name',
   },
   fields: [
+    {
+      name: 'site',
+      type: 'relationship',
+      relationTo: 'sites',
+      admin: {
+        description: 'Website this contact belongs to.',
+        position: 'sidebar',
+      },
+    },
     {
       name: 'name',
       type: 'text',
@@ -23,7 +32,6 @@ export const Contacts: CollectionConfig = {
       name: 'email',
       type: 'email',
       required: true,
-      unique: true,
     },
     {
       name: 'phone',

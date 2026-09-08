@@ -8,6 +8,7 @@ export type LandingSection = {
 }
 
 export type LandingPackage = {
+  id?: number | string
   title: string
   slug?: string
   category: SectionKey
@@ -32,6 +33,7 @@ export type LandingPackage = {
     label?: string
     url?: string
   }
+  site?: number | string | { id?: number | string; slug?: string }
 }
 
 export type LandingContent = {
