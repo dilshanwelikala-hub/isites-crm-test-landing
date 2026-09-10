@@ -19,7 +19,7 @@ export const Sites: CollectionConfig = {
     delete: ({ req: { user } }) => Boolean(user),
   },
   admin: {
-    defaultColumns: ['name', 'slug', 'template', 'status', '_status'],
+    defaultColumns: ['name', 'slug', 'template', 'siteStatus', '_status'],
     group: 'Sites',
     preview: (doc) => {
       const token = previewToken()
@@ -48,50 +48,20 @@ export const Sites: CollectionConfig = {
       },
     },
     {
-      name: 'status',
-      type: 'select',
+      name: 'siteStatus',
+      type: 'text',
       defaultValue: 'live',
-      options: [
-        {
-          label: 'Draft',
-          value: 'draft',
-        },
-        {
-          label: 'Live',
-          value: 'live',
-        },
-        {
-          label: 'Archived',
-          value: 'archived',
-        },
-      ],
       admin: {
+        description: 'Use live, draft, or archived.',
         position: 'sidebar',
       },
     },
     {
       name: 'template',
-      type: 'select',
+      type: 'text',
       defaultValue: 'resort',
-      options: [
-        {
-          label: 'Resort / Hotel',
-          value: 'resort',
-        },
-        {
-          label: 'Restaurant',
-          value: 'restaurant',
-        },
-        {
-          label: 'Event / Venue',
-          value: 'event',
-        },
-        {
-          label: 'Service Business',
-          value: 'service',
-        },
-      ],
       admin: {
+        description: 'Use resort, restaurant, event, or service.',
         position: 'sidebar',
       },
     },

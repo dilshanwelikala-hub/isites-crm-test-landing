@@ -35,7 +35,7 @@ const siteData = {
   ...defaultContent,
   name: 'The Test Resort',
   slug: siteSlug,
-  status: 'live',
+  siteStatus: 'live',
   template: 'resort',
   primaryDomain: '',
   _status: 'published',

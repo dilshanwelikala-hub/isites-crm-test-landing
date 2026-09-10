@@ -23,7 +23,7 @@ type SiteRecord = LandingContent & {
   id: number | string
   name?: string
   slug?: string
-  status?: string
+  siteStatus?: string
 }
 
 function siteURL() {
@@ -65,7 +65,7 @@ async function findSite(siteSlug: string, isPreview = false): Promise<SiteRecord
               },
             },
             {
-              status: {
+              siteStatus: {
                 equals: 'live',
               },
             },

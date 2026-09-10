@@ -17,7 +17,7 @@ type SiteCard = {
   name?: string | null
   primaryDomain?: string | null
   slug?: string | null
-  status?: string | null
+  siteStatus?: string | null
   template?: string | null
   updatedAt?: string | null
 }
@@ -162,7 +162,7 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
       payload.count({
         collection: 'sites',
         where: {
-          status: {
+          siteStatus: {
             equals: 'live',
           },
         },
@@ -331,7 +331,7 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
                 <span>{site.primaryDomain || `/sites/${site.slug}`}</span>
                 <footer>
                   <small>{templateLabel(site.template)}</small>
-                  <small>{site.status || 'draft'}</small>
+                  <small>{site.siteStatus || 'draft'}</small>
                   {site.slug ? <small>Preview: /sites/{site.slug}</small> : null}
                 </footer>
               </a>

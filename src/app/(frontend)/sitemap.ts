@@ -62,7 +62,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       where: {
         and: [
           {
-            status: {
+            siteStatus: {
               equals: 'live',
             },
           },
