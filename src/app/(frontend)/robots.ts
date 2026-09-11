@@ -1,8 +1,6 @@
 import type { MetadataRoute } from 'next'
 
-function siteURL() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
-}
+import { getSiteURL } from '../../lib/siteURL'
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -11,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: '/admin',
     },
-    sitemap: `${siteURL()}/sitemap.xml`,
+    sitemap: `${getSiteURL()}/sitemap.xml`,
   }
 }

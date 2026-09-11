@@ -4,10 +4,7 @@ import config from '@payload-config'
 import { getPayload } from 'payload'
 
 import { defaultPackages } from '../../lib/landingDefaults'
-
-function siteURL() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
-}
+import { getSiteURL } from '../../lib/siteURL'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let slugs = defaultPackages.map((item) => item.slug).filter(Boolean) as string[]
@@ -62,11 +59,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       where: {
         and: [
           {
-            siteStatus: {
-              equals: 'live',
-            },
-          },
-          {
             _status: {
               equals: 'published',
             },
@@ -77,6 +69,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     slugs = rootPackages.docs.map((item) => item.slug).filter(Boolean)
     siteEntries = sites.docs.flatMap((site) => {
+      if (['archived', 'draft'].includes(site.siteStatus || '')) {
+        return []
+      }
+
       const siteSlug = site.slug
 
       if (!siteSlug) {
@@ -94,13 +90,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
       return [
         {
-          url: `${siteURL()}/sites/${siteSlug}`,
+          url: `${getSiteURL()}/sites/${siteSlug}`,
           lastModified: new Date(),
           changeFrequency: 'weekly' as const,
           priority: 0.9,
         },
         ...sitePackages.map((slug) => ({
-          url: `${siteURL()}/sites/${siteSlug}/packages/${slug}`,
+          url: `${getSiteURL()}/sites/${siteSlug}/packages/${slug}`,
           lastModified: new Date(),
           changeFrequency: 'monthly' as const,
           priority: 0.7,
@@ -113,13 +109,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     {
-      url: siteURL(),
+      url: getSiteURL(),
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 1,
     },
     ...slugs.map((slug) => ({
-      url: `${siteURL()}/packages/${slug}`,
+      url: `${getSiteURL()}/packages/${slug}`,
       lastModified: new Date(),
       changeFrequency: 'monthly' as const,
       priority: 0.7,

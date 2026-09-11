@@ -16,6 +16,7 @@ This is a multi-site Web CMS prototype built with Next.js and Payload CMS.
 - Local media uploads
 - Local SQLite database for the first test build
 - Hosted Postgres support for Vercel deployments
+- Hosted media upload support through Vercel Blob
 
 ## Local setup
 
@@ -106,3 +107,21 @@ BLOB_READ_WRITE_TOKEN
 ```
 
 When this variable exists, the `media` collection stores uploads in Vercel Blob. Without it, local development continues to use local media storage.
+
+If image uploads fail on Vercel, confirm the Blob store is connected to this Vercel project and that `BLOB_READ_WRITE_TOKEN` exists for Production and Preview environments.
+
+## Production URLs
+
+Set this variable in Vercel when using a custom domain or stable public URL:
+
+```text
+PAYLOAD_PUBLIC_SITE_URL
+```
+
+For the current preview deployment, this should be:
+
+```text
+https://isites-crm-test-landing.vercel.app
+```
+
+Preview links use this URL first. On Vercel, the app can also fall back to Vercel's production project URL so admin preview links do not point at old deployment-specific URLs.

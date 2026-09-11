@@ -9,15 +9,12 @@ import {
   type LandingContent,
   type LandingPackage,
 } from '../../lib/landingDefaults'
+import { getSiteURL } from '../../lib/siteURL'
 import { LandingExperience } from './components/LandingExperience'
 
 export const dynamic = 'force-dynamic'
 
 type SearchParams = Record<string, string | string[] | undefined>
-
-function siteURL() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
-}
 
 function firstParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value
@@ -90,13 +87,13 @@ export async function generateMetadata(): Promise<Metadata> {
     title,
     description,
     alternates: {
-      canonical: siteURL(),
+      canonical: getSiteURL(),
     },
     openGraph: {
       title,
       description,
       type: 'website',
-      url: siteURL(),
+      url: getSiteURL(),
       images: image ? [{ url: image }] : undefined,
     },
     twitter: {

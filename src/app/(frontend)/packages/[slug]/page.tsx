@@ -6,6 +6,7 @@ import { getPayload } from 'payload'
 
 import { InquiryForm } from '../../components/InquiryForm'
 import { defaultContent, defaultPackages, type LandingPackage } from '../../../../lib/landingDefaults'
+import { getSiteURL } from '../../../../lib/siteURL'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,10 +15,6 @@ type Args = {
     slug: string
   }>
   searchParams?: Promise<Record<string, string | string[] | undefined>>
-}
-
-function siteURL() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
 }
 
 function firstParam(value: string | string[] | undefined) {
@@ -98,13 +95,13 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
     title,
     description: item.summary,
     alternates: {
-      canonical: `${siteURL()}/packages/${slug}`,
+      canonical: `${getSiteURL()}/packages/${slug}`,
     },
     openGraph: {
       title,
       description: item.summary,
       type: 'article',
-      url: `${siteURL()}/packages/${slug}`,
+      url: `${getSiteURL()}/packages/${slug}`,
       images: image ? [{ url: image }] : undefined,
     },
     twitter: {

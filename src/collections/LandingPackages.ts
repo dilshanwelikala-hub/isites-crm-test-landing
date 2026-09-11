@@ -1,8 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-function siteURL() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
-}
+import { getSiteURL } from '../lib/siteURL'
 
 function previewToken() {
   return process.env.PREVIEW_SECRET || process.env.PAYLOAD_SECRET
@@ -24,12 +22,12 @@ export const LandingPackages: CollectionConfig = {
       }
 
       if (doc.site && typeof doc.site === 'object' && 'slug' in doc.site && typeof doc.site.slug === 'string') {
-        return `${siteURL()}/sites/${doc.site.slug}/packages/${doc.slug}?preview=true&previewToken=${encodeURIComponent(
+        return `${getSiteURL()}/sites/${doc.site.slug}/packages/${doc.slug}?preview=true&previewToken=${encodeURIComponent(
           token,
         )}`
       }
 
-      return `${siteURL()}/packages/${doc.slug}?preview=true&previewToken=${encodeURIComponent(token)}`
+      return `${getSiteURL()}/packages/${doc.slug}?preview=true&previewToken=${encodeURIComponent(token)}`
     },
     useAsTitle: 'title',
   },

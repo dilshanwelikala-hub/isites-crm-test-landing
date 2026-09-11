@@ -1,8 +1,6 @@
 import type { GlobalConfig } from 'payload'
 
-function siteURL() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
-}
+import { getSiteURL } from '../lib/siteURL'
 
 function previewToken() {
   return process.env.PREVIEW_SECRET || process.env.PAYLOAD_SECRET
@@ -22,7 +20,7 @@ export const LandingPage: GlobalConfig = {
         return null
       }
 
-      return `${siteURL()}/?preview=true&previewToken=${encodeURIComponent(token)}`
+      return `${getSiteURL()}/?preview=true&previewToken=${encodeURIComponent(token)}`
     },
   },
   fields: [

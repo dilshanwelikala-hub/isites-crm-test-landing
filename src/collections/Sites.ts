@@ -1,10 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { defaultContent } from '../lib/landingDefaults'
-
-function siteURL() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
-}
+import { getSiteURL } from '../lib/siteURL'
 
 function previewToken() {
   return process.env.PREVIEW_SECRET || process.env.PAYLOAD_SECRET
@@ -28,7 +25,7 @@ export const Sites: CollectionConfig = {
         return null
       }
 
-      return `${siteURL()}/sites/${doc.slug}?preview=true&previewToken=${encodeURIComponent(token)}`
+      return `${getSiteURL()}/sites/${doc.slug}?preview=true&previewToken=${encodeURIComponent(token)}`
     },
     useAsTitle: 'name',
   },

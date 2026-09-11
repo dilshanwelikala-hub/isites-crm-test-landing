@@ -19,6 +19,7 @@ import { LandingPage } from './src/globals/LandingPage'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 const databaseURL = process.env.DATABASE_URL || process.env.POSTGRES_URL
+const blobToken = process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL_BLOB_READ_WRITE_TOKEN
 
 export default buildConfig({
   admin: {
@@ -56,8 +57,8 @@ export default buildConfig({
   globals: [LandingPage],
   plugins: [
     vercelBlobStorage({
-      enabled: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
-      token: process.env.BLOB_READ_WRITE_TOKEN,
+      enabled: Boolean(blobToken),
+      token: blobToken,
       collections: {
         media: {
           prefix: 'landing-media',

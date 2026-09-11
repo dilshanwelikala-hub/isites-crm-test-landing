@@ -6,6 +6,7 @@ import { getPayload } from 'payload'
 
 import { InquiryForm } from '../../../../components/InquiryForm'
 import { defaultContent, type LandingContent, type LandingPackage } from '../../../../../../lib/landingDefaults'
+import { getSiteURL } from '../../../../../../lib/siteURL'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,10 +25,6 @@ type SiteRecord = LandingContent & {
   name?: string
   slug?: string
   siteStatus?: string
-}
-
-function siteURL() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
 }
 
 function firstParam(value: string | string[] | undefined) {
@@ -65,11 +62,6 @@ async function findSite(siteSlug: string, isPreview = false): Promise<SiteRecord
               },
             },
             {
-              siteStatus: {
-                equals: 'live',
-              },
-            },
-            {
               _status: {
                 equals: 'published',
               },
@@ -78,7 +70,13 @@ async function findSite(siteSlug: string, isPreview = false): Promise<SiteRecord
         },
   })
 
-  return (result.docs[0] as unknown as SiteRecord) || null
+  const site = (result.docs[0] as unknown as SiteRecord) || null
+
+  if (!site || (!isPreview && ['archived', 'draft'].includes(site.siteStatus || ''))) {
+    return null
+  }
+
+  return site
 }
 
 async function findPackage(
@@ -165,13 +163,13 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
     title,
     description: data.item.summary,
     alternates: {
-      canonical: `${siteURL()}/sites/${siteSlug}/packages/${slug}`,
+      canonical: `${getSiteURL()}/sites/${siteSlug}/packages/${slug}`,
     },
     openGraph: {
       title,
       description: data.item.summary,
       type: 'article',
-      url: `${siteURL()}/sites/${siteSlug}/packages/${slug}`,
+      url: `${getSiteURL()}/sites/${siteSlug}/packages/${slug}`,
       images: image ? [{ url: image }] : undefined,
     },
     twitter: {

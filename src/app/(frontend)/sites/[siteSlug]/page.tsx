@@ -10,6 +10,7 @@ import {
   type LandingContent,
   type LandingPackage,
 } from '../../../../lib/landingDefaults'
+import { getSiteURL } from '../../../../lib/siteURL'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,10 +28,6 @@ type SiteRecord = LandingContent & {
   name?: string
   slug?: string
   siteStatus?: string
-}
-
-function siteURL() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
 }
 
 function firstParam(value: string | string[] | undefined) {
@@ -68,11 +65,6 @@ async function findSite(siteSlug: string, isPreview = false): Promise<SiteRecord
               },
             },
             {
-              siteStatus: {
-                equals: 'live',
-              },
-            },
-            {
               _status: {
                 equals: 'published',
               },
@@ -81,7 +73,13 @@ async function findSite(siteSlug: string, isPreview = false): Promise<SiteRecord
         },
   })
 
-  return (result.docs[0] as unknown as SiteRecord) || null
+  const site = (result.docs[0] as unknown as SiteRecord) || null
+
+  if (!site || (!isPreview && ['archived', 'draft'].includes(site.siteStatus || ''))) {
+    return null
+  }
+
+  return site
 }
 
 async function getSiteLandingData(siteSlug: string, isPreview = false) {
@@ -150,13 +148,13 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
     title,
     description,
     alternates: {
-      canonical: `${siteURL()}/sites/${siteSlug}`,
+      canonical: `${getSiteURL()}/sites/${siteSlug}`,
     },
     openGraph: {
       title,
       description,
       type: 'website',
-      url: `${siteURL()}/sites/${siteSlug}`,
+      url: `${getSiteURL()}/sites/${siteSlug}`,
       images: image ? [{ url: image }] : undefined,
     },
     twitter: {
