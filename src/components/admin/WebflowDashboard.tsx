@@ -25,6 +25,15 @@ type SiteCard = {
   updatedAt?: string | null
 }
 
+type MediaCard = {
+  alt?: string | null
+  filesize?: number | null
+  filename?: string | null
+  id: number | string
+  mimeType?: string | null
+  usage?: string | null
+}
+
 type SiteWorkspace = SiteCard & {
   contactCount: number
   dueCount: number
@@ -147,6 +156,18 @@ function formatValue(value?: number | null) {
     style: 'currency',
     currency: 'USD',
   }).format(value)
+}
+
+function formatFileSize(value?: number | null) {
+  if (!value) {
+    return 'Size unavailable'
+  }
+
+  if (value < 1024 * 1024) {
+    return `${Math.round(value / 1024)} KB`
+  }
+
+  return `${(value / 1024 / 1024).toFixed(1)} MB`
 }
 
 function nextStepLabel(value?: string | null) {
@@ -361,11 +382,28 @@ async function getSiteWorkspace({
 
 export default async function WebflowDashboard({ payload }: ServerProps) {
   const now = new Date().toISOString()
+  const blobStorageEnabled = Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL_BLOB_READ_WRITE_TOKEN)
+  const storageStatus = blobStorageEnabled ? 'Vercel Blob connected' : 'Local upload fallback'
+  const storageHint = blobStorageEnabled
+    ? 'Uploads are stored in persistent cloud storage.'
+    : 'Connect Vercel Blob before using uploads in production.'
   const dueFollowUpHref = `/admin/collections/inquiries?where%5BfollowUpAt%5D%5Bless_than_equal%5D=${encodeURIComponent(
     now,
   )}`
-  const [sites, liveSites, packages, inquiries, contacts, media, followUpsDue, highPriority, recentInquiries, recentSites] =
-    await Promise.all([
+  const [
+    sites,
+    liveSites,
+    packages,
+    inquiries,
+    contacts,
+    media,
+    unassignedMedia,
+    recentMedia,
+    followUpsDue,
+    highPriority,
+    recentInquiries,
+    recentSites,
+  ] = await Promise.all([
       payload.count({
         collection: 'sites',
       }),
@@ -397,6 +435,20 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
       }),
       payload.count({
         collection: 'media',
+      }),
+      payload.count({
+        collection: 'media',
+        where: {
+          site: {
+            exists: false,
+          },
+        },
+      }),
+      payload.find({
+        collection: 'media',
+        depth: 0,
+        limit: 4,
+        sort: '-updatedAt',
       }),
       payload.count({
         collection: 'inquiries',
@@ -484,6 +536,7 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
     total: pipelineCounts[index]?.totalDocs || 0,
   }))
   const recentLeads = recentInquiries.docs as LeadCard[]
+  const recentAssets = recentMedia.docs as MediaCard[]
 
   return (
     <section className="wf-dashboard">
@@ -543,6 +596,53 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
         <div>
           <strong>{media.totalDocs}</strong>
           <span>Media assets</span>
+        </div>
+      </div>
+
+      <div className="wf-dashboard__media">
+        <header className="wf-dashboard__section-header">
+          <div>
+            <p className="wf-dashboard__eyebrow">Media</p>
+            <h3>Asset readiness</h3>
+          </div>
+          <a href="/admin/collections/media/create">Upload image</a>
+        </header>
+        <div className="wf-dashboard__media-layout">
+          <div className="wf-dashboard__media-status">
+            <strong>{storageStatus}</strong>
+            <span>{storageHint}</span>
+            <div>
+              <a href="/admin/collections/media">View media</a>
+              <a href="/admin/collections/media/create">Add image</a>
+            </div>
+          </div>
+          <div className="wf-dashboard__media-metrics">
+            <a href="/admin/collections/media">
+              <strong>{media.totalDocs}</strong>
+              <span>Total assets</span>
+            </a>
+            <a href="/admin/collections/media?where%5Bsite%5D%5Bexists%5D=false">
+              <strong>{unassignedMedia.totalDocs}</strong>
+              <span>Unassigned</span>
+            </a>
+          </div>
+          <div className="wf-dashboard__media-recent">
+            <strong>Recent assets</strong>
+            {recentAssets.length ? (
+              <div>
+                {recentAssets.map((asset) => (
+                  <a href={`/admin/collections/media/${asset.id}`} key={asset.id}>
+                    <span>{asset.alt || asset.filename || 'Untitled image'}</span>
+                    <small>
+                      {asset.usage || asset.mimeType || 'Image'} - {formatFileSize(asset.filesize)}
+                    </small>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <p>No media uploaded yet.</p>
+            )}
+          </div>
         </div>
       </div>
 

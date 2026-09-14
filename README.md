@@ -18,6 +18,7 @@ This is a multi-site Web CMS prototype built with Next.js and Payload CMS.
 - Local SQLite database for the first test build
 - Hosted Postgres support for Vercel deployments
 - Hosted media upload support through Vercel Blob
+- Image-only media library with thumbnails, focal point control, and site assignment
 
 ## Local setup
 
@@ -56,6 +57,7 @@ In the admin panel:
 - Assign package cards, media, inquiries, and contacts to a site when they belong to a client website
 - Set package records to `Published` to show them on the public page
 - Upload images under `Media`
+- Add alt text, usage notes, source credits, tags, and site assignment for uploaded media
 - Review incoming leads under `Lead Management > Inquiries`
 - View automatically created contacts under `Lead Management > Contacts`
 
@@ -113,6 +115,8 @@ BLOB_READ_WRITE_TOKEN
 When this variable exists, the `media` collection stores uploads in Vercel Blob. Without it, local development continues to use local media storage.
 
 If image uploads fail on Vercel, confirm the Blob store is connected to this Vercel project and that `BLOB_READ_WRITE_TOKEN` exists for Production and Preview environments.
+
+The CMS media library accepts image uploads and creates smaller versions for thumbnails, cards, hero sections, and Open Graph previews. Each media item can be assigned to a site so client assets stay easier to filter and manage.
 
 ## Production URLs
 
