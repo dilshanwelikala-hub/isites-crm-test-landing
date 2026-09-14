@@ -1,10 +1,19 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionBeforeValidateHook, CollectionConfig } from 'payload'
 
 import { defaultContent } from '../lib/landingDefaults'
+import { applySiteTemplateDefaults } from '../lib/siteTemplates'
 import { getSiteURL } from '../lib/siteURL'
 
 function previewToken() {
   return process.env.PREVIEW_SECRET || process.env.PAYLOAD_SECRET
+}
+
+const applyTemplateDefaults: CollectionBeforeValidateHook = ({ data, operation }) => {
+  if (operation !== 'create' || !data) {
+    return data
+  }
+
+  return applySiteTemplateDefaults(data)
 }
 
 export const Sites: CollectionConfig = {
@@ -58,7 +67,8 @@ export const Sites: CollectionConfig = {
       type: 'text',
       defaultValue: 'resort',
       admin: {
-        description: 'Use resort, restaurant, event, or service.',
+        description:
+          'Choose the starter content type: resort, restaurant, event, or service. Applied when a site is first created.',
         position: 'sidebar',
       },
     },
@@ -339,6 +349,9 @@ export const Sites: CollectionConfig = {
       ],
     },
   ],
+  hooks: {
+    beforeValidate: [applyTemplateDefaults],
+  },
   versions: {
     drafts: true,
   },

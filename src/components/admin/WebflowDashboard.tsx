@@ -1,5 +1,7 @@
 import type { ServerProps, Where } from 'payload'
 
+import { getTemplateLabel, siteTemplates, type SiteTemplate } from '../../lib/siteTemplates'
+
 type LeadCard = {
   createdAt?: string | null
   email?: string | null
@@ -36,6 +38,11 @@ type SiteWorkspace = SiteCard & {
   }>
   recentLeads: LeadCard[]
   wonCount: number
+}
+
+type TemplateWorkspace = SiteTemplate & {
+  liveSiteCount: number
+  siteCount: number
 }
 
 const quickActions = [
@@ -168,17 +175,6 @@ function statusLabel(value?: string | null) {
   return value ? labels[value] || value : 'New'
 }
 
-function templateLabel(value?: string | null) {
-  const labels: Record<string, string> = {
-    resort: 'Resort / Hotel',
-    restaurant: 'Restaurant',
-    event: 'Event / Venue',
-    service: 'Service Business',
-  }
-
-  return value ? labels[value] || value : 'Template'
-}
-
 function siteStatusLabel(value?: string | null) {
   const labels: Record<string, string> = {
     archived: 'Archived',
@@ -203,6 +199,58 @@ function siteWhere(siteID: number | string): Where {
 
 function filteredCollectionHref(collection: string, siteID: number | string) {
   return `/admin/collections/${collection}?where%5Bsite%5D%5Bequals%5D=${encodeURIComponent(String(siteID))}`
+}
+
+function templateHref(templateKey: string) {
+  return `/admin/collections/sites?where%5Btemplate%5D%5Bequals%5D=${encodeURIComponent(templateKey)}`
+}
+
+async function getTemplateWorkspace({
+  payload,
+  template,
+}: {
+  payload: ServerProps['payload']
+  template: SiteTemplate
+}): Promise<TemplateWorkspace> {
+  const templateWhere: Where = {
+    template: {
+      equals: template.key,
+    },
+  }
+  const [siteCount, liveSiteCount] = await Promise.all([
+    payload.count({
+      collection: 'sites',
+      where: templateWhere,
+    }),
+    payload.count({
+      collection: 'sites',
+      where: {
+        and: [
+          templateWhere,
+          {
+            or: [
+              {
+                siteStatus: {
+                  equals: 'live',
+                },
+              },
+              {
+                siteStatus: {
+                  exists: false,
+                },
+              },
+            ],
+          },
+        ],
+      },
+    }),
+  ])
+
+  return {
+    ...template,
+    liveSiteCount: liveSiteCount.totalDocs || 0,
+    siteCount: siteCount.totalDocs || 0,
+  }
 }
 
 async function getSiteWorkspace({
@@ -390,7 +438,7 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
       }),
     ])
 
-  const [pipelineCounts, pipelineLeadResults, siteWorkspaces] = await Promise.all([
+  const [pipelineCounts, pipelineLeadResults, siteWorkspaces, templateWorkspaces] = await Promise.all([
     Promise.all(
       pipelineStages.map((stage) =>
         payload.count({
@@ -427,6 +475,7 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
         }),
       ),
     ),
+    Promise.all(siteTemplates.map((template) => getTemplateWorkspace({ payload, template }))),
   ])
 
   const pipeline = pipelineStages.map((stage, index) => ({
@@ -497,6 +546,38 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
         </div>
       </div>
 
+      <div className="wf-dashboard__templates">
+        <header className="wf-dashboard__section-header">
+          <div>
+            <p className="wf-dashboard__eyebrow">Templates</p>
+            <h3>Client site starters</h3>
+          </div>
+          <a href="/admin/collections/sites/create">Create site</a>
+        </header>
+        <div className="wf-dashboard__template-grid">
+          {templateWorkspaces.map((template) => (
+            <article className="wf-dashboard__template-card" key={template.key}>
+              <header>
+                <span style={{ background: template.theme.accentColor }} />
+                <div>
+                  <strong>{template.label}</strong>
+                  <small>{template.summary}</small>
+                </div>
+              </header>
+              <p>{template.bestFor}</p>
+              <div>
+                <span>{template.siteCount} sites</span>
+                <span>{template.liveSiteCount} live</span>
+              </div>
+              <footer>
+                <a href={`/admin/collections/sites/create?template=${template.key}`}>Start site</a>
+                <a href={templateHref(template.key)}>View sites</a>
+              </footer>
+            </article>
+          ))}
+        </div>
+      </div>
+
       <div className="wf-dashboard__sites">
         <header className="wf-dashboard__section-header">
           <div>
@@ -518,7 +599,7 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
                 </header>
 
                 <div className="wf-dashboard__site-meta">
-                  <span>{templateLabel(site.template)}</span>
+                  <span>{getTemplateLabel(site.template)}</span>
                   <span>{site.dueCount} due</span>
                   <span>{site.wonCount} won</span>
                 </div>

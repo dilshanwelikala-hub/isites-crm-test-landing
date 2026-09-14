@@ -8,6 +8,7 @@ This is a multi-site Web CMS prototype built with Next.js and Payload CMS.
 - Multi-site public pages at `/sites/[siteSlug]`
 - Payload admin panel at `/admin`
 - Sites collection for managing multiple client websites
+- Client site template presets for resort/hotel, restaurant, event/venue, and service businesses
 - Editable landing page global content
 - Editable package cards with draft/published workflow
 - Draft preview links for homepage and package edits
@@ -50,6 +51,7 @@ In the admin panel:
 
 - Edit the overall page copy under `Globals > Landing Page`
 - Create and manage client websites under `Sites > Sites`
+- Choose a site template key such as `resort`, `restaurant`, `event`, or `service` when creating a site
 - Add package cards under `Landing Page > Landing Packages`
 - Assign package cards, media, inquiries, and contacts to a site when they belong to a client website
 - Set package records to `Published` to show them on the public page
@@ -59,6 +61,8 @@ In the admin panel:
 
 The default public page includes fallback content so it looks complete before CMS records are added.
 Site records can be viewed at `/sites/[siteSlug]`, for example `/sites/test-resort` after seeding demo data.
+
+When a site is first created, the selected template key applies starter content, section labels, theme colors, footer defaults, and SEO defaults. Editors can then adjust that content for the actual client.
 
 ## Demo content
 
