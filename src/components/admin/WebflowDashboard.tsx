@@ -1,4 +1,4 @@
-import type { ServerProps } from 'payload'
+import type { ServerProps, Where } from 'payload'
 
 type LeadCard = {
   createdAt?: string | null
@@ -10,6 +10,7 @@ type LeadCard = {
   nextStep?: string | null
   packageTitle?: string | null
   priority?: string | null
+  status?: string | null
 }
 
 type SiteCard = {
@@ -20,6 +21,21 @@ type SiteCard = {
   siteStatus?: string | null
   template?: string | null
   updatedAt?: string | null
+}
+
+type SiteWorkspace = SiteCard & {
+  contactCount: number
+  dueCount: number
+  leadCount: number
+  mediaCount: number
+  packageCount: number
+  pipeline: Array<{
+    label: string
+    total: number
+    value: string
+  }>
+  recentLeads: LeadCard[]
+  wonCount: number
 }
 
 const quickActions = [
@@ -91,7 +107,7 @@ const pipelineStages = [
   },
 ]
 
-const activeLeadWhere = {
+const activeLeadWhere: Where = {
   status: {
     not_in: ['won', 'lost', 'closed'],
   },
@@ -138,6 +154,20 @@ function nextStepLabel(value?: string | null) {
   return value ? labels[value] || value : 'Reply to lead'
 }
 
+function statusLabel(value?: string | null) {
+  const labels: Record<string, string> = {
+    contacted: 'Contacted',
+    closed: 'Closed',
+    lost: 'Lost',
+    new: 'New',
+    proposal_sent: 'Proposal sent',
+    qualified: 'Qualified',
+    won: 'Won',
+  }
+
+  return value ? labels[value] || value : 'New'
+}
+
 function templateLabel(value?: string | null) {
   const labels: Record<string, string> = {
     resort: 'Resort / Hotel',
@@ -147,6 +177,138 @@ function templateLabel(value?: string | null) {
   }
 
   return value ? labels[value] || value : 'Template'
+}
+
+function siteStatusLabel(value?: string | null) {
+  const labels: Record<string, string> = {
+    archived: 'Archived',
+    draft: 'Draft',
+    live: 'Live',
+  }
+
+  return value ? labels[value] || value : 'Live'
+}
+
+function sitePath(site: SiteCard) {
+  return site.slug ? `/sites/${site.slug}` : '/'
+}
+
+function siteWhere(siteID: number | string): Where {
+  return {
+    site: {
+      equals: siteID,
+    },
+  }
+}
+
+function filteredCollectionHref(collection: string, siteID: number | string) {
+  return `/admin/collections/${collection}?where%5Bsite%5D%5Bequals%5D=${encodeURIComponent(String(siteID))}`
+}
+
+async function getSiteWorkspace({
+  now,
+  payload,
+  site,
+}: {
+  now: string
+  payload: ServerProps['payload']
+  site: SiteCard
+}): Promise<SiteWorkspace> {
+  const scopedWhere = siteWhere(site.id)
+  const [
+    packageCount,
+    leadCount,
+    contactCount,
+    mediaCount,
+    dueCount,
+    wonCount,
+    recentLeads,
+    pipelineCounts,
+  ] = await Promise.all([
+    payload.count({
+      collection: 'landing-packages',
+      where: scopedWhere,
+    }),
+    payload.count({
+      collection: 'inquiries',
+      where: scopedWhere,
+    }),
+    payload.count({
+      collection: 'contacts',
+      where: scopedWhere,
+    }),
+    payload.count({
+      collection: 'media',
+      where: scopedWhere,
+    }),
+    payload.count({
+      collection: 'inquiries',
+      where: {
+        and: [
+          scopedWhere,
+          activeLeadWhere,
+          {
+            followUpAt: {
+              less_than_equal: now,
+            },
+          },
+        ],
+      },
+    }),
+    payload.count({
+      collection: 'inquiries',
+      where: {
+        and: [
+          scopedWhere,
+          {
+            status: {
+              equals: 'won',
+            },
+          },
+        ],
+      },
+    }),
+    payload.find({
+      collection: 'inquiries',
+      depth: 0,
+      limit: 3,
+      sort: '-createdAt',
+      where: scopedWhere,
+    }),
+    Promise.all(
+      pipelineStages.map((stage) =>
+        payload.count({
+          collection: 'inquiries',
+          where: {
+            and: [
+              scopedWhere,
+              {
+                status: {
+                  equals: stage.value,
+                },
+              },
+            ],
+          },
+        }),
+      ),
+    ),
+  ])
+
+  return {
+    ...site,
+    contactCount: contactCount.totalDocs || 0,
+    dueCount: dueCount.totalDocs || 0,
+    leadCount: leadCount.totalDocs || 0,
+    mediaCount: mediaCount.totalDocs || 0,
+    packageCount: packageCount.totalDocs || 0,
+    pipeline: pipelineStages.map((stage, index) => ({
+      label: stage.label,
+      total: pipelineCounts[index]?.totalDocs || 0,
+      value: stage.value,
+    })),
+    recentLeads: recentLeads.docs as LeadCard[],
+    wonCount: wonCount.totalDocs || 0,
+  }
 }
 
 export default async function WebflowDashboard({ payload }: ServerProps) {
@@ -162,9 +324,18 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
       payload.count({
         collection: 'sites',
         where: {
-          siteStatus: {
-            equals: 'live',
-          },
+          or: [
+            {
+              siteStatus: {
+                equals: 'live',
+              },
+            },
+            {
+              siteStatus: {
+                exists: false,
+              },
+            },
+          ],
         },
       }),
       payload.count({
@@ -214,12 +385,12 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
       payload.find({
         collection: 'sites',
         depth: 0,
-        limit: 4,
+        limit: 6,
         sort: '-updatedAt',
       }),
     ])
 
-  const [pipelineCounts, pipelineLeadResults] = await Promise.all([
+  const [pipelineCounts, pipelineLeadResults, siteWorkspaces] = await Promise.all([
     Promise.all(
       pipelineStages.map((stage) =>
         payload.count({
@@ -247,6 +418,15 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
         }),
       ),
     ),
+    Promise.all(
+      (recentSites.docs as SiteCard[]).map((site) =>
+        getSiteWorkspace({
+          now,
+          payload,
+          site,
+        }),
+      ),
+    ),
   ])
 
   const pipeline = pipelineStages.map((stage, index) => ({
@@ -255,7 +435,6 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
     total: pipelineCounts[index]?.totalDocs || 0,
   }))
   const recentLeads = recentInquiries.docs as LeadCard[]
-  const siteCards = recentSites.docs as SiteCard[]
 
   return (
     <section className="wf-dashboard">
@@ -319,22 +498,93 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
       </div>
 
       <div className="wf-dashboard__sites">
-        <div>
-          <p className="wf-dashboard__eyebrow">Sites</p>
-          <h3>Multi-site workspace</h3>
-        </div>
-        {siteCards.length ? (
-          <div className="wf-dashboard__site-list">
-            {siteCards.map((site) => (
-              <a className="wf-dashboard__site-card" href={`/admin/collections/sites/${site.id}`} key={site.id}>
-                <strong>{site.name || site.slug || 'Untitled site'}</strong>
-                <span>{site.primaryDomain || `/sites/${site.slug}`}</span>
+        <header className="wf-dashboard__section-header">
+          <div>
+            <p className="wf-dashboard__eyebrow">Site CRM</p>
+            <h3>Site-based workspaces</h3>
+          </div>
+          <a href="/admin/collections/sites/create">Create site</a>
+        </header>
+        {siteWorkspaces.length ? (
+          <div className="wf-dashboard__site-workspaces">
+            {siteWorkspaces.map((site) => (
+              <article className="wf-dashboard__site-workspace" key={site.id}>
+                <header>
+                  <div>
+                    <strong>{site.name || site.slug || 'Untitled site'}</strong>
+                    <span>{site.primaryDomain || sitePath(site)}</span>
+                  </div>
+                  <em>{siteStatusLabel(site.siteStatus)}</em>
+                </header>
+
+                <div className="wf-dashboard__site-meta">
+                  <span>{templateLabel(site.template)}</span>
+                  <span>{site.dueCount} due</span>
+                  <span>{site.wonCount} won</span>
+                </div>
+
+                <div className="wf-dashboard__site-stats" aria-label={`${site.name || site.slug} totals`}>
+                  <a href={filteredCollectionHref('landing-packages', site.id)}>
+                    <strong>{site.packageCount}</strong>
+                    <span>Packages</span>
+                  </a>
+                  <a href={filteredCollectionHref('inquiries', site.id)}>
+                    <strong>{site.leadCount}</strong>
+                    <span>Leads</span>
+                  </a>
+                  <a href={filteredCollectionHref('contacts', site.id)}>
+                    <strong>{site.contactCount}</strong>
+                    <span>Contacts</span>
+                  </a>
+                  <a href={filteredCollectionHref('media', site.id)}>
+                    <strong>{site.mediaCount}</strong>
+                    <span>Media</span>
+                  </a>
+                </div>
+
+                <div className="wf-dashboard__site-pipeline">
+                  {site.pipeline.map((stage) => (
+                    <a
+                      href={`/admin/collections/inquiries?where%5Band%5D%5B0%5D%5Bsite%5D%5Bequals%5D=${encodeURIComponent(
+                        String(site.id),
+                      )}&where%5Band%5D%5B1%5D%5Bstatus%5D%5Bequals%5D=${stage.value}`}
+                      key={stage.value}
+                    >
+                      <span>{stage.label}</span>
+                      <strong>{stage.total}</strong>
+                    </a>
+                  ))}
+                </div>
+
+                <div className="wf-dashboard__site-leads">
+                  <strong>Recent leads</strong>
+                  {site.recentLeads.length ? (
+                    <div>
+                      {site.recentLeads.map((lead) => (
+                        <a href={`/admin/collections/inquiries/${lead.id}`} key={lead.id}>
+                          <span>{lead.name || lead.email || 'Unnamed lead'}</span>
+                          <small>
+                            {statusLabel(lead.status)} - {nextStepLabel(lead.nextStep)}
+                          </small>
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <p>No leads for this site yet.</p>
+                  )}
+                </div>
+
                 <footer>
-                  <small>{templateLabel(site.template)}</small>
-                  <small>{site.siteStatus || 'draft'}</small>
-                  {site.slug ? <small>Preview: /sites/{site.slug}</small> : null}
+                  <a href={`/admin/collections/sites/${site.id}`}>Edit site</a>
+                  {site.slug ? (
+                    <a href={sitePath(site)} target="_blank">
+                      Open site
+                    </a>
+                  ) : null}
+                  <a href={filteredCollectionHref('inquiries', site.id)}>View leads</a>
+                  <a href={filteredCollectionHref('landing-packages', site.id)}>View packages</a>
                 </footer>
-              </a>
+              </article>
             ))}
           </div>
         ) : (

@@ -20,6 +20,11 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 const databaseURL = process.env.DATABASE_URL || process.env.POSTGRES_URL
 const blobToken = process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL_BLOB_READ_WRITE_TOKEN
+const payloadSecret = process.env.PAYLOAD_SECRET
+
+if (!payloadSecret && process.env.NODE_ENV === 'production') {
+  throw new Error('PAYLOAD_SECRET is required in production.')
+}
 
 export default buildConfig({
   admin: {
@@ -73,7 +78,7 @@ export default buildConfig({
     graphQL: '/api/graphql',
     graphQLPlayground: '/api/graphql-playground',
   },
-  secret: process.env.PAYLOAD_SECRET || '',
+  secret: payloadSecret || 'local-development-secret',
   sharp,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
