@@ -28,6 +28,7 @@ if (!payloadSecret && process.env.NODE_ENV === 'production') {
 
 export default buildConfig({
   admin: {
+    theme: 'light',
     components: {
       beforeDashboard: ['./src/components/admin/WebflowDashboard.tsx'],
     },
