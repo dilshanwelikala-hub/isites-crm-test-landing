@@ -13,7 +13,7 @@ export const Media: CollectionConfig = {
   },
   admin: {
     defaultColumns: ['alt', 'site', 'usage', 'updatedAt'],
-    group: 'Assets',
+    group: 'CMS',
     useAsTitle: 'alt',
   },
   fields: [

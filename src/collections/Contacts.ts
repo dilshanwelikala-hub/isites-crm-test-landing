@@ -10,7 +10,7 @@ export const Contacts: CollectionConfig = {
   },
   admin: {
     defaultColumns: ['name', 'site', 'email', 'phone', 'lifecycleStage', 'lastInquiryAt'],
-    group: 'Lead Management',
+    group: 'CRM',
     useAsTitle: 'name',
   },
   fields: [

@@ -13,7 +13,7 @@ export const LandingPackages: CollectionConfig = {
   },
   admin: {
     defaultColumns: ['title', 'site', 'category', 'displayOrder', '_status'],
-    group: 'Landing Page',
+    group: 'CMS',
     preview: (doc) => {
       const token = previewToken()
 

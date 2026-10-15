@@ -26,7 +26,7 @@ export const Sites: CollectionConfig = {
   },
   admin: {
     defaultColumns: ['name', 'slug', 'template', 'siteStatus', '_status'],
-    group: 'Sites',
+    group: 'CMS',
     preview: (doc) => {
       const token = previewToken()
 

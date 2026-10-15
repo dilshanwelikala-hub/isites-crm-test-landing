@@ -12,7 +12,7 @@ export const LandingPage: GlobalConfig = {
     read: () => true,
   },
   admin: {
-    group: 'Landing Page',
+    group: 'CMS',
     preview: () => {
       const token = previewToken()
 

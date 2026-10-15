@@ -30,7 +30,12 @@ export default buildConfig({
   admin: {
     theme: 'light',
     components: {
-      beforeDashboard: ['./src/components/admin/WebflowDashboard.tsx'],
+      Nav: './src/components/admin/WorkspaceNav.tsx',
+      views: {
+        dashboard: {
+          Component: './src/components/admin/WebflowDashboard.tsx',
+        },
+      },
     },
     routes: {
       account: '/account',

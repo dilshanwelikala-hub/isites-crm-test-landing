@@ -1,4 +1,9 @@
+import { Gutter } from '@payloadcms/ui'
+import { CircleUserRound, Users } from 'lucide-react'
 import type { ServerProps, Where } from 'payload'
+import type { ReactNode } from 'react'
+
+import { parseWorkspace, workspaceForLocation, type Workspace } from '../../lib/adminNavigation'
 
 import { getTemplateLabel, siteTemplates, type SiteTemplate } from '../../lib/siteTemplates'
 
@@ -35,18 +40,8 @@ type MediaCard = {
 }
 
 type SiteWorkspace = SiteCard & {
-  contactCount: number
-  dueCount: number
-  leadCount: number
   mediaCount: number
   packageCount: number
-  pipeline: Array<{
-    label: string
-    total: number
-    value: string
-  }>
-  recentLeads: LeadCard[]
-  wonCount: number
 }
 
 type TemplateWorkspace = SiteTemplate & {
@@ -85,14 +80,6 @@ const quickActions = [
     href: '/admin/collections/media',
     description: 'Images, alt text, captions, and gallery assets.',
   },
-]
-
-const workflow = [
-  'Create or edit content',
-  'Save draft',
-  'Preview the public page',
-  'Publish changes',
-  'Qualify incoming leads',
 ]
 
 const pipelineStages = [
@@ -275,330 +262,118 @@ async function getTemplateWorkspace({
 }
 
 async function getSiteWorkspace({
-  now,
   payload,
   site,
 }: {
-  now: string
   payload: ServerProps['payload']
   site: SiteCard
 }): Promise<SiteWorkspace> {
-  const scopedWhere = siteWhere(site.id)
-  const [
-    packageCount,
-    leadCount,
-    contactCount,
-    mediaCount,
-    dueCount,
-    wonCount,
-    recentLeads,
-    pipelineCounts,
-  ] = await Promise.all([
-    payload.count({
-      collection: 'landing-packages',
-      where: scopedWhere,
-    }),
-    payload.count({
-      collection: 'inquiries',
-      where: scopedWhere,
-    }),
-    payload.count({
-      collection: 'contacts',
-      where: scopedWhere,
-    }),
-    payload.count({
-      collection: 'media',
-      where: scopedWhere,
-    }),
-    payload.count({
-      collection: 'inquiries',
-      where: {
-        and: [
-          scopedWhere,
-          activeLeadWhere,
-          {
-            followUpAt: {
-              less_than_equal: now,
-            },
-          },
-        ],
-      },
-    }),
-    payload.count({
-      collection: 'inquiries',
-      where: {
-        and: [
-          scopedWhere,
-          {
-            status: {
-              equals: 'won',
-            },
-          },
-        ],
-      },
-    }),
-    payload.find({
-      collection: 'inquiries',
-      depth: 0,
-      limit: 3,
-      sort: '-createdAt',
-      where: scopedWhere,
-    }),
-    Promise.all(
-      pipelineStages.map((stage) =>
-        payload.count({
-          collection: 'inquiries',
-          where: {
-            and: [
-              scopedWhere,
-              {
-                status: {
-                  equals: stage.value,
-                },
-              },
-            ],
-          },
-        }),
-      ),
-    ),
+  const where = siteWhere(site.id)
+  const [packages, media] = await Promise.all([
+    payload.count({ collection: 'landing-packages', where }),
+    payload.count({ collection: 'media', where }),
   ])
-
-  return {
-    ...site,
-    contactCount: contactCount.totalDocs || 0,
-    dueCount: dueCount.totalDocs || 0,
-    leadCount: leadCount.totalDocs || 0,
-    mediaCount: mediaCount.totalDocs || 0,
-    packageCount: packageCount.totalDocs || 0,
-    pipeline: pipelineStages.map((stage, index) => ({
-      label: stage.label,
-      total: pipelineCounts[index]?.totalDocs || 0,
-      value: stage.value,
-    })),
-    recentLeads: recentLeads.docs as LeadCard[],
-    wonCount: wonCount.totalDocs || 0,
-  }
+  return { ...site, packageCount: packages.totalDocs, mediaCount: media.totalDocs }
 }
 
-export default async function WebflowDashboard({ payload }: ServerProps) {
-  const now = new Date().toISOString()
-  const blobStorageEnabled = Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL_BLOB_READ_WRITE_TOKEN)
+function DashboardFrame({ workspace, children }: { workspace: Workspace; children: ReactNode }) {
+  return (
+    <section className={`wf-dashboard wf-dashboard--${workspace}`} data-workspace={workspace}>
+      <div className="wf-dashboard__topbar">
+        <h1>{workspace === 'settings' ? 'Settings' : `${workspace.toUpperCase()} Workspace`}</h1>
+        {workspace === 'cms' ? (
+          <div className="wf-dashboard__topbar-actions">
+            <a href="/" target="_blank" rel="noreferrer">
+              Open live site
+            </a>
+            <a href="/admin/globals/landing-page">Edit page</a>
+          </div>
+        ) : workspace === 'crm' ? (
+          <div className="wf-dashboard__topbar-actions">
+            <a href="/admin/collections/inquiries">Review inquiries</a>
+            <a href="/admin/collections/contacts">View contacts</a>
+          </div>
+        ) : null}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+function DashboardMetrics({
+  workspace,
+  items,
+}: {
+  workspace: Workspace
+  items: Array<{ label: string; total: number }>
+}) {
+  return (
+    <div className="wf-dashboard__metrics" aria-label={`${workspace.toUpperCase()} totals`}>
+      {items.map((item) => (
+        <div key={item.label}>
+          <strong>{item.total}</strong>
+          <span>{item.label}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function QuickActions({ workspace }: { workspace: Workspace }) {
+  return (
+    <div className="wf-dashboard__grid">
+      {quickActions
+        .filter((action) => workspaceForLocation(action.href, '') === workspace)
+        .map((action) => (
+          <a className="wf-dashboard__card" href={action.href} key={action.href}>
+            <strong>{action.label}</strong>
+            <span>{action.description}</span>
+          </a>
+        ))}
+    </div>
+  )
+}
+
+async function CMSDashboard({ payload }: Pick<ServerProps, 'payload'>) {
+  const blobStorageEnabled = Boolean(
+    process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL_BLOB_READ_WRITE_TOKEN,
+  )
   const storageStatus = blobStorageEnabled ? 'Vercel Blob connected' : 'Local upload fallback'
   const storageHint = blobStorageEnabled
     ? 'Uploads are stored in persistent cloud storage.'
     : 'Connect Vercel Blob before using uploads in production.'
-  const dueFollowUpHref = `/admin/collections/inquiries?where%5BfollowUpAt%5D%5Bless_than_equal%5D=${encodeURIComponent(
-    now,
-  )}`
-  const [
-    sites,
-    liveSites,
-    packages,
-    inquiries,
-    contacts,
-    media,
-    unassignedMedia,
-    recentMedia,
-    followUpsDue,
-    highPriority,
-    recentInquiries,
-    recentSites,
-  ] = await Promise.all([
+  const [sites, liveSites, packages, media, unassignedMedia, recentMedia, recentSites] =
+    await Promise.all([
+      payload.count({ collection: 'sites' }),
       payload.count({
         collection: 'sites',
+        where: { or: [{ siteStatus: { equals: 'live' } }, { siteStatus: { exists: false } }] },
       }),
-      payload.count({
-        collection: 'sites',
-        where: {
-          or: [
-            {
-              siteStatus: {
-                equals: 'live',
-              },
-            },
-            {
-              siteStatus: {
-                exists: false,
-              },
-            },
-          ],
-        },
-      }),
-      payload.count({
-        collection: 'landing-packages',
-      }),
-      payload.count({
-        collection: 'inquiries',
-      }),
-      payload.count({
-        collection: 'contacts',
-      }),
-      payload.count({
-        collection: 'media',
-      }),
-      payload.count({
-        collection: 'media',
-        where: {
-          site: {
-            exists: false,
-          },
-        },
-      }),
-      payload.find({
-        collection: 'media',
-        depth: 0,
-        limit: 4,
-        sort: '-updatedAt',
-      }),
-      payload.count({
-        collection: 'inquiries',
-        where: {
-          and: [
-            activeLeadWhere,
-            {
-              followUpAt: {
-                less_than_equal: now,
-              },
-            },
-          ],
-        },
-      }),
-      payload.count({
-        collection: 'inquiries',
-        where: {
-          and: [
-            activeLeadWhere,
-            {
-              priority: {
-                equals: 'high',
-              },
-            },
-          ],
-        },
-      }),
-      payload.find({
-        collection: 'inquiries',
-        depth: 0,
-        limit: 5,
-        sort: '-createdAt',
-      }),
-      payload.find({
-        collection: 'sites',
-        depth: 0,
-        limit: 6,
-        sort: '-updatedAt',
-      }),
+      payload.count({ collection: 'landing-packages' }),
+      payload.count({ collection: 'media' }),
+      payload.count({ collection: 'media', where: { site: { exists: false } } }),
+      payload.find({ collection: 'media', depth: 0, limit: 4, sort: '-updatedAt' }),
+      payload.find({ collection: 'sites', depth: 0, limit: 6, sort: '-updatedAt' }),
     ])
-
-  const [pipelineCounts, pipelineLeadResults, siteWorkspaces, templateWorkspaces] = await Promise.all([
+  const [siteWorkspaces, templateWorkspaces] = await Promise.all([
     Promise.all(
-      pipelineStages.map((stage) =>
-        payload.count({
-          collection: 'inquiries',
-          where: {
-            status: {
-              equals: stage.value,
-            },
-          },
-        }),
-      ),
-    ),
-    Promise.all(
-      pipelineStages.map((stage) =>
-        payload.find({
-          collection: 'inquiries',
-          depth: 0,
-          limit: 3,
-          sort: '-createdAt',
-          where: {
-            status: {
-              equals: stage.value,
-            },
-          },
-        }),
-      ),
-    ),
-    Promise.all(
-      (recentSites.docs as SiteCard[]).map((site) =>
-        getSiteWorkspace({
-          now,
-          payload,
-          site,
-        }),
-      ),
+      (recentSites.docs as SiteCard[]).map((site) => getSiteWorkspace({ payload, site })),
     ),
     Promise.all(siteTemplates.map((template) => getTemplateWorkspace({ payload, template }))),
   ])
-
-  const pipeline = pipelineStages.map((stage, index) => ({
-    ...stage,
-    leads: pipelineLeadResults[index]?.docs as LeadCard[],
-    total: pipelineCounts[index]?.totalDocs || 0,
-  }))
-  const recentLeads = recentInquiries.docs as LeadCard[]
   const recentAssets = recentMedia.docs as MediaCard[]
 
   return (
-    <section className="wf-dashboard">
-      <div className="wf-dashboard__topbar">
-        <div>
-          <p>CMS Workspace</p>
-          <h1>iSites Landing CMS</h1>
-        </div>
-        <div className="wf-dashboard__topbar-actions">
-          <a href="/" target="_blank">
-            Open live site
-          </a>
-          <a href="/admin/globals/landing-page">Edit page</a>
-        </div>
-      </div>
-
-      <div className="wf-dashboard__hero">
-        <div>
-          <p className="wf-dashboard__eyebrow">Build, edit, publish</p>
-          <h2>Manage content and leads in one focused Webflow-style workspace.</h2>
-          <span>
-            Editors can publish landing content, preview drafts, review incoming inquiries, and move
-            qualified leads through a lightweight sales workflow.
-          </span>
-        </div>
-        <div className="wf-dashboard__status">
-          <strong>Working flow</strong>
-          <ol>
-            {workflow.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ol>
-        </div>
-      </div>
-
-      <div className="wf-dashboard__metrics" aria-label="CMS totals">
-        <div>
-          <strong>{sites.totalDocs}</strong>
-          <span>Total sites</span>
-        </div>
-        <div>
-          <strong>{liveSites.totalDocs}</strong>
-          <span>Live sites</span>
-        </div>
-        <div>
-          <strong>{packages.totalDocs}</strong>
-          <span>Packages</span>
-        </div>
-        <div>
-          <strong>{inquiries.totalDocs}</strong>
-          <span>Inquiries</span>
-        </div>
-        <div>
-          <strong>{contacts.totalDocs}</strong>
-          <span>Contacts</span>
-        </div>
-        <div>
-          <strong>{media.totalDocs}</strong>
-          <span>Media assets</span>
-        </div>
-      </div>
-
+    <DashboardFrame workspace="cms">
+      <DashboardMetrics
+        workspace="cms"
+        items={[
+          { label: 'Total sites', total: sites.totalDocs },
+          { label: 'Live sites', total: liveSites.totalDocs },
+          { label: 'Packages', total: packages.totalDocs },
+          { label: 'Media assets', total: media.totalDocs },
+        ]}
+      />
       <div className="wf-dashboard__media">
         <header className="wf-dashboard__section-header">
           <div>
@@ -681,8 +456,8 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
       <div className="wf-dashboard__sites">
         <header className="wf-dashboard__section-header">
           <div>
-            <p className="wf-dashboard__eyebrow">Site CRM</p>
-            <h3>Site-based workspaces</h3>
+            <p className="wf-dashboard__eyebrow">Sites</p>
+            <h3>Site workspaces</h3>
           </div>
           <a href="/admin/collections/sites/create">Create site</a>
         </header>
@@ -700,59 +475,20 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
 
                 <div className="wf-dashboard__site-meta">
                   <span>{getTemplateLabel(site.template)}</span>
-                  <span>{site.dueCount} due</span>
-                  <span>{site.wonCount} won</span>
                 </div>
 
-                <div className="wf-dashboard__site-stats" aria-label={`${site.name || site.slug} totals`}>
+                <div
+                  className="wf-dashboard__site-stats"
+                  aria-label={`${site.name || site.slug} totals`}
+                >
                   <a href={filteredCollectionHref('landing-packages', site.id)}>
                     <strong>{site.packageCount}</strong>
                     <span>Packages</span>
-                  </a>
-                  <a href={filteredCollectionHref('inquiries', site.id)}>
-                    <strong>{site.leadCount}</strong>
-                    <span>Leads</span>
-                  </a>
-                  <a href={filteredCollectionHref('contacts', site.id)}>
-                    <strong>{site.contactCount}</strong>
-                    <span>Contacts</span>
                   </a>
                   <a href={filteredCollectionHref('media', site.id)}>
                     <strong>{site.mediaCount}</strong>
                     <span>Media</span>
                   </a>
-                </div>
-
-                <div className="wf-dashboard__site-pipeline">
-                  {site.pipeline.map((stage) => (
-                    <a
-                      href={`/admin/collections/inquiries?where%5Band%5D%5B0%5D%5Bsite%5D%5Bequals%5D=${encodeURIComponent(
-                        String(site.id),
-                      )}&where%5Band%5D%5B1%5D%5Bstatus%5D%5Bequals%5D=${stage.value}`}
-                      key={stage.value}
-                    >
-                      <span>{stage.label}</span>
-                      <strong>{stage.total}</strong>
-                    </a>
-                  ))}
-                </div>
-
-                <div className="wf-dashboard__site-leads">
-                  <strong>Recent leads</strong>
-                  {site.recentLeads.length ? (
-                    <div>
-                      {site.recentLeads.map((lead) => (
-                        <a href={`/admin/collections/inquiries/${lead.id}`} key={lead.id}>
-                          <span>{lead.name || lead.email || 'Unnamed lead'}</span>
-                          <small>
-                            {statusLabel(lead.status)} - {nextStepLabel(lead.nextStep)}
-                          </small>
-                        </a>
-                      ))}
-                    </div>
-                  ) : (
-                    <p>No leads for this site yet.</p>
-                  )}
                 </div>
 
                 <footer>
@@ -762,7 +498,6 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
                       Open site
                     </a>
                   ) : null}
-                  <a href={filteredCollectionHref('inquiries', site.id)}>View leads</a>
                   <a href={filteredCollectionHref('landing-packages', site.id)}>View packages</a>
                 </footer>
               </article>
@@ -771,12 +506,70 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
         ) : (
           <div className="wf-dashboard__empty-panel">
             <strong>No sites created yet.</strong>
-            <span>Create the first client site, then assign packages and leads to it.</span>
+            <span>Create the first client site, then assign packages and media to it.</span>
             <a href="/admin/collections/sites/create">Create site</a>
           </div>
         )}
       </div>
 
+      <QuickActions workspace="cms" />
+    </DashboardFrame>
+  )
+}
+
+async function CRMDashboard({ payload }: Pick<ServerProps, 'payload'>) {
+  const now = new Date().toISOString()
+  const dueFollowUpHref = `/admin/collections/inquiries?where%5BfollowUpAt%5D%5Bless_than_equal%5D=${encodeURIComponent(now)}`
+  const [inquiries, contacts, followUpsDue, highPriority, recentInquiries] = await Promise.all([
+    payload.count({ collection: 'inquiries' }),
+    payload.count({ collection: 'contacts' }),
+    payload.count({
+      collection: 'inquiries',
+      where: { and: [activeLeadWhere, { followUpAt: { less_than_equal: now } }] },
+    }),
+    payload.count({
+      collection: 'inquiries',
+      where: { and: [activeLeadWhere, { priority: { equals: 'high' } }] },
+    }),
+    payload.find({ collection: 'inquiries', depth: 0, limit: 5, sort: '-createdAt' }),
+  ])
+  const [pipelineCounts, pipelineLeadResults] = await Promise.all([
+    Promise.all(
+      pipelineStages.map((stage) =>
+        payload.count({
+          collection: 'inquiries',
+          where: { status: { equals: stage.value } },
+        }),
+      ),
+    ),
+    Promise.all(
+      pipelineStages.map((stage) =>
+        payload.find({
+          collection: 'inquiries',
+          depth: 0,
+          limit: 3,
+          sort: '-createdAt',
+          where: { status: { equals: stage.value } },
+        }),
+      ),
+    ),
+  ])
+  const pipeline = pipelineStages.map((stage, index) => ({
+    ...stage,
+    leads: pipelineLeadResults[index]?.docs as LeadCard[],
+    total: pipelineCounts[index]?.totalDocs || 0,
+  }))
+  const recentLeads = recentInquiries.docs as LeadCard[]
+
+  return (
+    <DashboardFrame workspace="crm">
+      <DashboardMetrics
+        workspace="crm"
+        items={[
+          { label: 'Contacts', total: contacts.totalDocs },
+          { label: 'Inquiries', total: inquiries.totalDocs },
+        ]}
+      />
       <div className="wf-dashboard__focus-grid">
         <a className="wf-dashboard__focus-card" href={dueFollowUpHref}>
           <span>Needs attention</span>
@@ -862,14 +655,42 @@ export default async function WebflowDashboard({ payload }: ServerProps) {
         </div>
       </div>
 
+      <QuickActions workspace="crm" />
+    </DashboardFrame>
+  )
+}
+
+function SettingsDashboard({ permissions }: Pick<ServerProps, 'permissions'>) {
+  return (
+    <DashboardFrame workspace="settings">
       <div className="wf-dashboard__grid">
-        {quickActions.map((action) => (
-          <a className="wf-dashboard__card" href={action.href} key={action.href}>
-            <strong>{action.label}</strong>
-            <span>{action.description}</span>
+        {permissions?.collections?.users?.read ? (
+          <a className="wf-dashboard__card" href="/admin/collections/users">
+            <Users aria-hidden="true" size={24} />
+            <strong>Users</strong>
           </a>
-        ))}
+        ) : null}
+        <a className="wf-dashboard__card" href="/admin/account">
+          <CircleUserRound aria-hidden="true" size={24} />
+          <strong>Accounts</strong>
+        </a>
       </div>
-    </section>
+    </DashboardFrame>
+  )
+}
+
+export default function WebflowDashboard({ payload, permissions, searchParams }: ServerProps) {
+  const workspace = parseWorkspace(searchParams?.workspace)
+
+  return (
+    <Gutter className="dashboard">
+      {workspace === 'crm' ? (
+        <CRMDashboard payload={payload} />
+      ) : workspace === 'settings' ? (
+        <SettingsDashboard permissions={permissions} />
+      ) : (
+        <CMSDashboard payload={payload} />
+      )}
+    </Gutter>
   )
 }

@@ -138,7 +138,7 @@ export const Inquiries: CollectionConfig = {
   },
   admin: {
     defaultColumns: ['name', 'email', 'status', 'priority', 'nextStep', 'followUpAt'],
-    group: 'Lead Management',
+    group: 'CRM',
     useAsTitle: 'name',
   },
   fields: [
