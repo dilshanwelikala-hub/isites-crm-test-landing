@@ -9,6 +9,7 @@ import { buildConfig } from 'payload'
 import sharp from 'sharp'
 
 import { Contacts } from './src/collections/Contacts'
+import { AnalyticsEvents } from './src/collections/AnalyticsEvents'
 import { Inquiries } from './src/collections/Inquiries'
 import { LandingPackages } from './src/collections/LandingPackages'
 import { Media } from './src/collections/Media'
@@ -52,7 +53,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Sites, Media, LandingPackages, Contacts, Inquiries],
+  collections: [Users, Sites, Media, LandingPackages, Contacts, Inquiries, AnalyticsEvents],
   db: databaseURL
     ? postgresAdapter({
         pool: {

@@ -1,4 +1,58 @@
 import type { CollectionBeforeChangeHook, CollectionConfig, Where } from 'payload'
+import { trackingEnabled } from '../lib/analyticsCollection'
+import {
+  analyticsVisitor,
+  excludedTrackingRequest,
+  validVisitorID,
+  verifyTrackingToken,
+} from '../lib/analyticsServer'
+
+const attributeAnalytics: CollectionBeforeChangeHook = async ({
+  data,
+  operation,
+  originalDoc,
+  req,
+}) => {
+  // Only verified website submissions may set attribution, never public REST fields.
+  data.analyticsVisitor = operation === 'create' ? null : originalDoc?.analyticsVisitor
+  data.analyticsPath = operation === 'create' ? null : originalDoc?.analyticsPath
+  if (
+    operation === 'update' &&
+    data.site !== undefined &&
+    relationshipID(data.site) !== relationshipID(originalDoc?.site)
+  ) {
+    data.analyticsVisitor = null
+    data.analyticsPath = null
+  }
+  const input = data.analyticsInput
+  delete data.analyticsInput
+  if (
+    operation !== 'create' ||
+    req.user ||
+    excludedTrackingRequest(req.headers) ||
+    !input ||
+    typeof input !== 'object'
+  )
+    return data
+  const claims = verifyTrackingToken(input.token)
+  if (
+    !claims ||
+    !validVisitorID(input.visitor) ||
+    claims.site !== (relationshipID(data.site) ?? null)
+  )
+    return data
+  try {
+    if (await trackingEnabled(req.payload, claims.site)) {
+      data.analyticsVisitor = analyticsVisitor(input.visitor, claims.site)
+      data.analyticsPath = claims.path
+    }
+  } catch {
+    req.payload.logger.warn(
+      'Inquiry saved without analytics attribution because tracking is unavailable.',
+    )
+  }
+  return data
+}
 
 function relationshipID(value: unknown) {
   if (value && typeof value === 'object' && 'id' in value) {
@@ -23,7 +77,9 @@ const connectInquiry: CollectionBeforeChangeHook = async ({ data, operation, req
     return data
   }
 
-  const email = String(data.email || '').trim().toLowerCase()
+  const email = String(data.email || '')
+    .trim()
+    .toLowerCase()
 
   if (!email) {
     return data
@@ -142,6 +198,15 @@ export const Inquiries: CollectionConfig = {
     useAsTitle: 'name',
   },
   fields: [
+    {
+      name: 'analyticsInput',
+      type: 'json',
+      virtual: true,
+      admin: { hidden: true },
+      access: { read: () => false },
+    },
+    { name: 'analyticsVisitor', type: 'text', index: true, admin: { hidden: true } },
+    { name: 'analyticsPath', type: 'text', admin: { readOnly: true }, label: 'Analytics page' },
     {
       name: 'site',
       type: 'relationship',
@@ -406,6 +471,6 @@ export const Inquiries: CollectionConfig = {
     },
   ],
   hooks: {
-    beforeChange: [connectInquiry],
+    beforeChange: [attributeAnalytics, connectInquiry],
   },
 }

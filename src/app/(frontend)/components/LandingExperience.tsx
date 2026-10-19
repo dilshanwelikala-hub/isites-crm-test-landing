@@ -1,4 +1,8 @@
-import { defaultContent, type LandingContent, type LandingPackage } from '../../../lib/landingDefaults'
+import {
+  defaultContent,
+  type LandingContent,
+  type LandingPackage,
+} from '../../../lib/landingDefaults'
 
 type LandingExperienceProps = {
   basePath?: string
@@ -17,17 +21,29 @@ function PackageActions({ basePath = '', item }: { basePath?: string; item: Land
   return (
     <div className="actions">
       {item.primaryAction?.url ? (
-        <a className="button buttonPrimary" href={item.primaryAction.url}>
+        <a
+          className="button buttonPrimary"
+          data-analytics-event="package_primary"
+          href={item.primaryAction.url}
+        >
           {item.primaryAction.label || 'Book now'}
         </a>
       ) : null}
       {item.secondaryAction?.url ? (
-        <a className="button buttonSecondary" href={item.secondaryAction.url}>
+        <a
+          className="button buttonSecondary"
+          data-analytics-event="package_secondary"
+          href={item.secondaryAction.url}
+        >
           {item.secondaryAction.label || 'View details'}
         </a>
       ) : null}
       {item.slug ? (
-        <a className="button buttonSecondary" href={packagePath}>
+        <a
+          className="button buttonSecondary"
+          data-analytics-event="package_details"
+          href={packagePath}
+        >
           Package page
         </a>
       ) : null}
@@ -77,8 +93,11 @@ export function LandingExperience({
   const sections = content.sections?.length ? content.sections : defaultContent.sections || []
   const stats = content.stats?.length ? content.stats : defaultContent.stats || []
   const heroImage =
-    content.hero?.image?.url || content.hero?.fallbackImageUrl || defaultContent.hero?.fallbackImageUrl
-  const heroAlt = content.hero?.image?.alt || content.hero?.title || defaultContent.hero?.title || ''
+    content.hero?.image?.url ||
+    content.hero?.fallbackImageUrl ||
+    defaultContent.hero?.fallbackImageUrl
+  const heroAlt =
+    content.hero?.image?.alt || content.hero?.title || defaultContent.hero?.title || ''
   const homePath = basePath || '/'
 
   return (
@@ -107,7 +126,10 @@ export function LandingExperience({
           <p>{content.hero?.eyebrow || defaultContent.hero?.eyebrow}</p>
           <h1>{content.hero?.title || defaultContent.hero?.title}</h1>
           <span>{content.hero?.description || defaultContent.hero?.description}</span>
-          <a href={content.hero?.ctaUrl || defaultContent.hero?.ctaUrl || '#curated'}>
+          <a
+            data-analytics-event="hero_cta"
+            href={content.hero?.ctaUrl || defaultContent.hero?.ctaUrl || '#curated'}
+          >
             {content.hero?.ctaLabel || defaultContent.hero?.ctaLabel || 'Explore offers'}
           </a>
         </div>
@@ -118,7 +140,9 @@ export function LandingExperience({
           <strong>{content.alert.label || 'Update'}</strong>
           <span>{content.alert.text}</span>
           {content.alert.linkUrl ? (
-            <a href={content.alert.linkUrl}>{content.alert.linkLabel || 'Learn more'}</a>
+            <a data-analytics-event="alert_cta" href={content.alert.linkUrl}>
+              {content.alert.linkLabel || 'Learn more'}
+            </a>
           ) : null}
         </section>
       ) : null}
@@ -223,7 +247,11 @@ export function LandingExperience({
         <form>
           <label htmlFor="email">Email address</label>
           <input id="email" name="email" placeholder="you@example.com" type="email" />
-          <a className="newsletterButton" href={content.newsletter?.buttonUrl || '#'}>
+          <a
+            className="newsletterButton"
+            data-analytics-event="newsletter_cta"
+            href={content.newsletter?.buttonUrl || '#'}
+          >
             {content.newsletter?.buttonLabel || 'Sign up'}
           </a>
         </form>
@@ -232,8 +260,12 @@ export function LandingExperience({
       <footer className="footer">
         <strong>{content.footer?.brand || defaultContent.footer?.brand}</strong>
         <span>{content.footer?.address || defaultContent.footer?.address}</span>
-        <span>{content.footer?.phone || defaultContent.footer?.phone}</span>
-        {content.footer?.email ? <a href={`mailto:${content.footer.email}`}>{content.footer.email}</a> : null}
+        <a href={`tel:${content.footer?.phone || defaultContent.footer?.phone}`}>
+          {content.footer?.phone || defaultContent.footer?.phone}
+        </a>
+        {content.footer?.email ? (
+          <a href={`mailto:${content.footer.email}`}>{content.footer.email}</a>
+        ) : null}
       </footer>
     </main>
   )

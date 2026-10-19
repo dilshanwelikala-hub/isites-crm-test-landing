@@ -11,6 +11,7 @@ import {
 } from '../../lib/landingDefaults'
 import { getSiteURL } from '../../lib/siteURL'
 import { LandingExperience } from './components/LandingExperience'
+import { SiteAnalytics } from './components/SiteAnalytics'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,8 +26,8 @@ function previewEnabled(searchParams: SearchParams = {}) {
 
   return Boolean(
     token &&
-      firstParam(searchParams.preview) === 'true' &&
-      firstParam(searchParams.previewToken) === token,
+    firstParam(searchParams.preview) === 'true' &&
+    firstParam(searchParams.previewToken) === token,
   )
 }
 
@@ -66,7 +67,9 @@ async function getLandingData(isPreview = false) {
 
     return {
       content: (landingPage || defaultContent) as LandingContent,
-      packages: packages.docs.length ? (packages.docs as unknown as LandingPackage[]) : defaultPackages,
+      packages: packages.docs.length
+        ? (packages.docs as unknown as LandingPackage[])
+        : defaultPackages,
     }
   } catch {
     return {
@@ -81,7 +84,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = content.seo?.title || defaultContent.seo?.title
   const description = content.seo?.description || defaultContent.seo?.description
   const image =
-    content.hero?.image?.url || content.hero?.fallbackImageUrl || defaultContent.hero?.fallbackImageUrl
+    content.hero?.image?.url ||
+    content.hero?.fallbackImageUrl ||
+    defaultContent.hero?.fallbackImageUrl
 
   return {
     title,
@@ -105,14 +110,14 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default async function Page({
-  searchParams,
-}: {
-  searchParams?: Promise<SearchParams>
-}) {
+export default async function Page({ searchParams }: { searchParams?: Promise<SearchParams> }) {
   const resolvedSearchParams = searchParams ? await searchParams : {}
   const isPreview = previewEnabled(resolvedSearchParams)
   const { content, packages } = await getLandingData(isPreview)
 
-  return <LandingExperience content={content} isPreview={isPreview} packages={packages} />
+  return (
+    <SiteAnalytics path="/" preview={isPreview}>
+      <LandingExperience content={content} isPreview={isPreview} packages={packages} />
+    </SiteAnalytics>
+  )
 }

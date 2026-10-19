@@ -19,6 +19,56 @@ This is a multi-site Web CMS prototype built with Next.js and Payload CMS.
 - Hosted Postgres support for Vercel deployments
 - Hosted media upload support through Vercel Blob
 - Image-only media library with thumbnails, focal point control, and site assignment
+- Per-site analytics for page views, selected CTA clicks, referrers, and saved website inquiries
+
+## Site analytics
+
+Open `CMS > Sites > [site] > Analytics`, or use the Analytics link on a site workspace.
+The default site has its own independent report. Reports include UTC date filters (7, 30,
+90 days or a custom range up to 90 days), daily activity, top pages, button clicks,
+estimated visitors, attributed inquiries, and visitor conversion.
+
+Tracking is **off by default**. In the site's editor, enable `Analytics Enabled` and publish
+the site. For the default site, enable and publish this setting in Landing Page instead.
+Review the site's privacy notice and any applicable consent requirements before enabling
+tracking. This implementation is not a consent-management platform.
+
+An estimated visitor is a browser-tab session, not a unique person. A random identifier
+is held in sessionStorage and stored server-side only as a site-specific HMAC. Analytics
+does not store cookies, IP addresses, form contents, link destinations, URL query strings,
+or full referrer URLs. Only external referrer hostnames are retained. Do Not Track,
+Global Privacy Control, preview URLs, authenticated editors, and obvious bots are excluded.
+Blocked scripts or unavailable storage reduce the measured totals.
+
+The tracked actions are hero, package primary/secondary/detail, announcement, newsletter,
+phone, and email links. Clicks measure interactions, not confirmed bookings or newsletter
+subscriptions. Inquiry counts come from successfully saved records with a verified page
+token; manual CRM records and failed submissions are excluded. Conversion is the percentage
+of measured visitor sessions in the period that also have an attributed inquiry in that period.
+Repeated inquiries from one session do not inflate conversion.
+
+The public collector accepts only signed, expiring same-origin page tokens, deduplicates
+page views and event retries, and accepts at most 100 events per page token. Raw events
+cannot be created, edited, or read anonymously through the Payload API. The per-token cap
+is not a substitute for a production firewall or distributed abuse protection.
+
+This MVP covers the pages served by this app, not arbitrary externally hosted sites.
+It starts collecting only after deployment and enablement, with no historical backfill.
+Reports are bounded at 50,000 events/inquiries per collection; larger reports require a
+shorter range. Raw events currently have no automatic retention cleanup. Establish a
+retention policy, database backups, and scheduled cleanup before high-volume production use;
+aggregate storage or a dedicated analytics service is a future scaling step.
+
+The schema adds the `analytics-events` collection, per-site/default-site enable flags,
+and inquiry attribution fields. The existing Vercel build schema-sync step applies these
+changes to Postgres. Back up and validate this schema update in staging before production.
+The local integration test uses a fresh temporary SQLite database and never loads hosted
+database credentials:
+
+```bash
+node --import tsx --test tests/adminNavigation.test.ts tests/analytics.test.ts
+node --import tsx --test tests/analytics.integration.ts
+```
 
 ## Local setup
 

@@ -4,6 +4,7 @@ import { NavHamburger, NavWrapper } from '@payloadcms/next/client'
 import { Logout, useNav } from '@payloadcms/ui'
 import {
   ChevronDown,
+  BarChart3,
   ChevronRight,
   CircleUserRound,
   ContactRound,
@@ -49,6 +50,7 @@ const itemIcons: Record<string, LucideIcon> = {
 }
 
 function getItemIcon(item: WorkspaceNavItem): LucideIcon {
+  if (item.id.startsWith('analytics-')) return BarChart3
   if (itemIcons[item.id]) return itemIcons[item.id]
   if (item.href?.startsWith('/admin/collections/landing-packages')) return Package
   if (item.href?.startsWith('/admin/collections/media')) return Images
@@ -94,6 +96,20 @@ function NavItem({
   }
 
   const current = Boolean(item.href && isNavLinkActive(item.href, pathname, search))
+  if (item.id.startsWith('analytics-')) {
+    return (
+      <li>
+        <a
+          aria-current={current ? 'page' : undefined}
+          className="workspace-nav__link"
+          href={item.href}
+        >
+          <Icon aria-hidden="true" focusable="false" strokeWidth={1.75} />
+          <span>{item.label}</span>
+        </a>
+      </li>
+    )
+  }
   return (
     <li>
       <Link

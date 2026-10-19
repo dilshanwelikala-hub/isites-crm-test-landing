@@ -40,6 +40,15 @@ export const Sites: CollectionConfig = {
   },
   fields: [
     {
+      name: 'analyticsEnabled',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description: 'Enable first-party page and button analytics after reviewing your site privacy notice.',
+      },
+    },
+    {
       name: 'name',
       type: 'text',
       required: true,

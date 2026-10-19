@@ -6,6 +6,7 @@ import {
   type WorkspaceNavSection,
 } from '../../lib/adminNavigation'
 import WorkspaceNavClient from './WorkspaceNav.client'
+import { analyticsHref } from '../../lib/analytics'
 
 type Props = ServerProps & { req?: PayloadRequest }
 
@@ -40,6 +41,16 @@ export default async function WorkspaceNav({
   }
 
   const contentLinks = (siteID?: number | string): WorkspaceNavItem[] => [
+    ...(permissions?.collections?.['analytics-events']?.read &&
+    permissions?.collections?.inquiries?.read
+      ? [
+          {
+            id: `analytics-${siteID ?? 'default'}`,
+            label: 'Analytics',
+            href: analyticsHref(siteID),
+          },
+        ]
+      : []),
     ...(siteID !== undefined || canReadLandingPage
       ? [
           {

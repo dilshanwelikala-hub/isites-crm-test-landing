@@ -6,6 +6,8 @@ import type { ReactNode } from 'react'
 import { parseWorkspace, workspaceForLocation, type Workspace } from '../../lib/adminNavigation'
 
 import { getTemplateLabel, siteTemplates, type SiteTemplate } from '../../lib/siteTemplates'
+import { analyticsHref } from '../../lib/analytics'
+import AnalyticsDashboard from './AnalyticsDashboard'
 
 type LeadCard = {
   createdAt?: string | null
@@ -493,6 +495,7 @@ async function CMSDashboard({ payload }: Pick<ServerProps, 'payload'>) {
 
                 <footer>
                   <a href={`/admin/collections/sites/${site.id}`}>Edit site</a>
+                  <a href={analyticsHref(site.id)}>Analytics</a>
                   {site.slug ? (
                     <a href={sitePath(site)} target="_blank">
                       Open site
@@ -679,12 +682,24 @@ function SettingsDashboard({ permissions }: Pick<ServerProps, 'permissions'>) {
   )
 }
 
-export default function WebflowDashboard({ payload, permissions, searchParams }: ServerProps) {
+export default function WebflowDashboard({
+  payload,
+  permissions,
+  searchParams,
+  user,
+}: ServerProps) {
   const workspace = parseWorkspace(searchParams?.workspace)
 
   return (
     <Gutter className="dashboard">
-      {workspace === 'crm' ? (
+      {workspace === 'cms' && searchParams?.view === 'analytics' ? (
+        <AnalyticsDashboard
+          payload={payload}
+          permissions={permissions}
+          searchParams={searchParams}
+          user={user}
+        />
+      ) : workspace === 'crm' ? (
         <CRMDashboard payload={payload} />
       ) : workspace === 'settings' ? (
         <SettingsDashboard permissions={permissions} />

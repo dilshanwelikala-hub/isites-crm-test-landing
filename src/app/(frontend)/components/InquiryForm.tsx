@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useInquiryAnalytics } from './SiteAnalytics.client'
 
 type FormState = 'idle' | 'sending' | 'sent' | 'error'
 
@@ -12,6 +13,7 @@ type InquiryFormProps = {
 
 export function InquiryForm({ packageSlug, packageTitle, siteId }: InquiryFormProps) {
   const [state, setState] = useState<FormState>('idle')
+  const inquiryAnalytics = useInquiryAnalytics()
 
   async function submitInquiry(formData: FormData) {
     setState('sending')
@@ -29,17 +31,22 @@ export function InquiryForm({ packageSlug, packageTitle, siteId }: InquiryFormPr
       consentToContact: formData.get('consentToContact') === 'on',
       sourcePageUrl: window.location.href,
       status: 'new',
+      analyticsInput: inquiryAnalytics?.(),
     }
 
-    const response = await fetch('/api/inquiries', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    })
+    try {
+      const response = await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
 
-    setState(response.ok ? 'sent' : 'error')
+      setState(response.ok ? 'sent' : 'error')
+    } catch {
+      setState('error')
+    }
   }
 
   return (
@@ -76,10 +83,10 @@ export function InquiryForm({ packageSlug, packageTitle, siteId }: InquiryFormPr
         />
       </label>
       <label className="inquiryFormConsent">
-        <input name="consentToContact" required type="checkbox" />
-        I agree to be contacted about this inquiry.
+        <input name="consentToContact" required type="checkbox" />I agree to be contacted about this
+        inquiry.
       </label>
-      <button disabled={state === 'sending'} type="submit">
+      <button disabled={state === 'sending' || state === 'sent'} type="submit">
         {state === 'sending' ? 'Sending...' : 'Send inquiry'}
       </button>
       {state === 'sent' ? <p>Your inquiry has been sent.</p> : null}

@@ -9,6 +9,15 @@ import {
   workspaceForLocation,
   workspaceHref,
 } from '../src/lib/adminNavigation'
+import { analyticsHref } from '../src/lib/analytics'
+
+test('analytics navigation selects only the requested site in CMS', () => {
+  const url = new URL(analyticsHref(12), 'https://workspace.local')
+  assert.equal(workspaceForLocation(url.pathname, url.search), 'cms')
+  assert.equal(isNavLinkActive(analyticsHref(12), url.pathname, url.search), true)
+  assert.equal(isNavLinkActive(analyticsHref(13), url.pathname, url.search), false)
+  assert.equal(isNavLinkActive(analyticsHref(), url.pathname, url.search), false)
+})
 
 test('workspace URLs preserve the selected dashboard across refresh', () => {
   for (const workspace of ['cms', 'crm', 'settings'] as const) {

@@ -5,7 +5,12 @@ import config from '@payload-config'
 import { getPayload } from 'payload'
 
 import { InquiryForm } from '../../components/InquiryForm'
-import { defaultContent, defaultPackages, type LandingPackage } from '../../../../lib/landingDefaults'
+import { SiteAnalytics } from '../../components/SiteAnalytics'
+import {
+  defaultContent,
+  defaultPackages,
+  type LandingPackage,
+} from '../../../../lib/landingDefaults'
 import { getSiteURL } from '../../../../lib/siteURL'
 
 export const dynamic = 'force-dynamic'
@@ -26,8 +31,8 @@ function previewEnabled(searchParams: Record<string, string | string[] | undefin
 
   return Boolean(
     token &&
-      firstParam(searchParams.preview) === 'true' &&
-      firstParam(searchParams.previewToken) === token,
+    firstParam(searchParams.preview) === 'true' &&
+    firstParam(searchParams.previewToken) === token,
   )
 }
 
@@ -126,56 +131,58 @@ export default async function PackagePage({ params, searchParams }: Args) {
   const inclusions = item.inclusions?.filter((inclusion) => inclusion.item) || []
 
   return (
-    <main>
-      {isPreview ? <div className="previewBanner">Draft preview mode</div> : null}
-      <header className="siteHeader">
-        <a className="brand" href="/">
-          {defaultContent.footer?.brand}
-        </a>
-        <nav aria-label="Package detail navigation">
-          <a href="/#curated">Packages</a>
-          <a href="/#partner">Experiences</a>
-          <a href="/#events">Events</a>
-        </nav>
-        <a className="headerCta" href="/admin">
-          CMS Admin
-        </a>
-      </header>
+    <SiteAnalytics path={`/packages/${slug}`} preview={isPreview}>
+      <main>
+        {isPreview ? <div className="previewBanner">Draft preview mode</div> : null}
+        <header className="siteHeader">
+          <a className="brand" href="/">
+            {defaultContent.footer?.brand}
+          </a>
+          <nav aria-label="Package detail navigation">
+            <a href="/#curated">Packages</a>
+            <a href="/#partner">Experiences</a>
+            <a href="/#events">Events</a>
+          </nav>
+          <a className="headerCta" href="/admin">
+            CMS Admin
+          </a>
+        </header>
 
-      <section className="detailHero">
-        <img src={imageFor(item)} alt={item.image?.alt || item.title} />
-        <div>
-          <p>{item.badge || 'Package'}</p>
-          <h1>{item.title}</h1>
-          <span>{item.summary}</span>
-        </div>
-      </section>
-
-      <section className="detailBody">
-        <article>
-          <div className="packageMeta">
-            {item.priceLabel ? <span>{item.priceLabel}</span> : null}
-            {item.duration ? <span>{item.duration}</span> : null}
-            <span>{item.category}</span>
+        <section className="detailHero">
+          <img src={imageFor(item)} alt={item.image?.alt || item.title} />
+          <div>
+            <p>{item.badge || 'Package'}</p>
+            <h1>{item.title}</h1>
+            <span>{item.summary}</span>
           </div>
-          {item.details ? <p>{item.details}</p> : <p>{item.summary}</p>}
-          {inclusions.length ? (
-            <>
-              <h2>What is included</h2>
-              <ul className="detailList">
-                {inclusions.map((inclusion) => (
-                  <li key={inclusion.item}>{inclusion.item}</li>
-                ))}
-              </ul>
-            </>
-          ) : null}
-        </article>
+        </section>
 
-        <aside>
-          <h2>Ask about this offer</h2>
-          <InquiryForm packageSlug={item.slug} packageTitle={item.title} />
-        </aside>
-      </section>
-    </main>
+        <section className="detailBody">
+          <article>
+            <div className="packageMeta">
+              {item.priceLabel ? <span>{item.priceLabel}</span> : null}
+              {item.duration ? <span>{item.duration}</span> : null}
+              <span>{item.category}</span>
+            </div>
+            {item.details ? <p>{item.details}</p> : <p>{item.summary}</p>}
+            {inclusions.length ? (
+              <>
+                <h2>What is included</h2>
+                <ul className="detailList">
+                  {inclusions.map((inclusion) => (
+                    <li key={inclusion.item}>{inclusion.item}</li>
+                  ))}
+                </ul>
+              </>
+            ) : null}
+          </article>
+
+          <aside>
+            <h2>Ask about this offer</h2>
+            <InquiryForm packageSlug={item.slug} packageTitle={item.title} />
+          </aside>
+        </section>
+      </main>
+    </SiteAnalytics>
   )
 }

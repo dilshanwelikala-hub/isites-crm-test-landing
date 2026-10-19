@@ -5,6 +5,7 @@ import config from '@payload-config'
 import { getPayload } from 'payload'
 
 import { LandingExperience } from '../../components/LandingExperience'
+import { SiteAnalytics } from '../../components/SiteAnalytics'
 import {
   defaultContent,
   type LandingContent,
@@ -39,8 +40,8 @@ function previewEnabled(searchParams: SearchParams = {}) {
 
   return Boolean(
     token &&
-      firstParam(searchParams.preview) === 'true' &&
-      firstParam(searchParams.previewToken) === token,
+    firstParam(searchParams.preview) === 'true' &&
+    firstParam(searchParams.previewToken) === token,
   )
 }
 
@@ -177,11 +178,13 @@ export default async function SitePage({ params, searchParams }: Args) {
   }
 
   return (
-    <LandingExperience
-      basePath={`/sites/${siteSlug}`}
-      content={data.content}
-      isPreview={isPreview}
-      packages={data.packages}
-    />
+    <SiteAnalytics siteID={data.site.id} path={`/sites/${siteSlug}`} preview={isPreview}>
+      <LandingExperience
+        basePath={`/sites/${siteSlug}`}
+        content={data.content}
+        isPreview={isPreview}
+        packages={data.packages}
+      />
+    </SiteAnalytics>
   )
 }

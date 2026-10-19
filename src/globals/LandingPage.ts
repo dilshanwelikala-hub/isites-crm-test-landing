@@ -25,6 +25,15 @@ export const LandingPage: GlobalConfig = {
   },
   fields: [
     {
+      name: 'analyticsEnabled',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description: 'Enable first-party page and button analytics after reviewing your site privacy notice.',
+      },
+    },
+    {
       name: 'hero',
       type: 'group',
       fields: [
