@@ -11,6 +11,10 @@ import {
 } from '../../lib/analytics'
 import { trackingEnabled } from '../../lib/analyticsCollection'
 import AnalyticsFilters from './AnalyticsFilters.client'
+import { analyticsTabs, parseAnalyticsTab } from '../../lib/analyticsAttribution'
+import { summarizePerformance } from '../../lib/analyticsPerformance'
+import { getSiteURL } from '../../lib/siteURL'
+import AnalyticsPerformanceReports from './AnalyticsPerformanceReports'
 
 type ReportProps = Pick<ServerProps, 'payload' | 'user' | 'permissions' | 'searchParams'>
 
@@ -38,8 +42,26 @@ async function reportRows(
               action: true,
               referrer: true,
               createdAt: true,
+              attributionVersion: true,
+              utmSource: true,
+              utmMedium: true,
+              utmCampaign: true,
+              packageSlug: true,
+              packageTitle: true,
             }
-          : { analyticsVisitor: true, createdAt: true },
+          : {
+              analyticsVisitor: true,
+              createdAt: true,
+              status: true,
+              analyticsPath: true,
+              analyticsAttributionVersion: true,
+              analyticsSource: true,
+              analyticsMedium: true,
+              analyticsCampaign: true,
+              analyticsReferrer: true,
+              analyticsPackageSlug: true,
+              analyticsPackageTitle: true,
+            },
       overrideAccess: false,
       user,
     })
@@ -107,6 +129,7 @@ async function Report({ payload, user, permissions, searchParams }: ReportProps)
   }
   const siteID = selection === 'default' ? null : Number(selection)
   const range = analyticsRange(searchParams?.start, searchParams?.end)
+  const tab = parseAnalyticsTab(searchParams?.tab)
   const site =
     siteID === null
       ? null
@@ -152,6 +175,11 @@ async function Report({ payload, user, permissions, searchParams }: ReportProps)
     range,
   )
   const maximum = Math.max(1, ...summary.days.map((day) => Math.max(day.views, day.inquiries)))
+  const performance = summarizePerformance(
+    events as AnalyticsEvent[],
+    inquiries as AnalyticsInquiry[],
+    range,
+  )
   const settingsURL = site ? `/admin/collections/sites/${site.id}` : '/admin/globals/landing-page'
 
   return (
@@ -188,7 +216,19 @@ async function Report({ payload, user, permissions, searchParams }: ReportProps)
         end={range.end}
         today={new Date().toISOString().slice(0, 10)}
         options={options.map((option) => ({ id: option.id, name: option.name }))}
+        tab={tab}
       />
+      <nav className="site-analytics__tabs" aria-label="Analytics reports">
+        {Object.entries(analyticsTabs).map(([key, label]) => (
+          <a
+            key={key}
+            href={`${analyticsHref(siteID ?? undefined)}&tab=${key}&start=${range.start}&end=${range.end}`}
+            aria-current={tab === key ? 'page' : undefined}
+          >
+            {label}
+          </a>
+        ))}
+      </nav>
       <div className="site-analytics__metrics">
         {[
           { label: 'Page views', value: summary.views.toLocaleString() },
@@ -217,45 +257,58 @@ async function Report({ payload, user, permissions, searchParams }: ReportProps)
           </div>
         ))}
       </div>
-      <section className="site-analytics__trend">
-        <header>
-          <h2>Daily activity</h2>
-          <div className="site-analytics__legend">
-            <span>Page views</span>
-            <span>Inquiries</span>
-          </div>
-        </header>
-        {summary.views || summary.inquiries ? (
-          <div
-            className="site-analytics__chart"
-            role="group"
-            aria-label={`Daily page views and inquiries from ${range.start} to ${range.end}, UTC`}
-          >
-            {summary.days.map((day) => (
-              <div
-                className="site-analytics__day"
-                key={day.date}
-                tabIndex={0}
-                title={`${day.date}: ${day.views} views, ${day.inquiries} inquiries`}
-                aria-label={`${day.date}: ${day.views} views, ${day.inquiries} inquiries`}
-              >
-                <div className="site-analytics__bars">
-                  <i style={{ height: `${(day.views / maximum) * 100}%` }} />
-                  <i style={{ height: `${(day.inquiries / maximum) * 100}%` }} />
-                </div>
-                <span>{day.date.slice(5)}</span>
+      {tab === 'overview' ? (
+        <>
+          <section className="site-analytics__trend">
+            <header>
+              <h2>Daily activity</h2>
+              <div className="site-analytics__legend">
+                <span>Page views</span>
+                <span>Inquiries</span>
               </div>
-            ))}
+            </header>
+            {summary.views || summary.inquiries ? (
+              <div
+                className="site-analytics__chart"
+                role="group"
+                aria-label={`Daily page views and inquiries from ${range.start} to ${range.end}, UTC`}
+              >
+                {summary.days.map((day) => (
+                  <div
+                    className="site-analytics__day"
+                    key={day.date}
+                    tabIndex={0}
+                    title={`${day.date}: ${day.views} views, ${day.inquiries} inquiries`}
+                    aria-label={`${day.date}: ${day.views} views, ${day.inquiries} inquiries`}
+                  >
+                    <div className="site-analytics__bars">
+                      <i style={{ height: `${(day.views / maximum) * 100}%` }} />
+                      <i style={{ height: `${(day.inquiries / maximum) * 100}%` }} />
+                    </div>
+                    <span>{day.date.slice(5)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="site-analytics__empty">No tracked activity in this period.</p>
+            )}
+          </section>
+          <div className="site-analytics__rankings">
+            <Ranking title="Top pages" rows={summary.pages} />
+            <Ranking title="Button clicks" rows={summary.actions} labels={analyticsActions} />
+            <Ranking title="Referrers" rows={summary.sources} />
           </div>
-        ) : (
-          <p className="site-analytics__empty">No tracked activity in this period.</p>
-        )}
-      </section>
-      <div className="site-analytics__rankings">
-        <Ranking title="Top pages" rows={summary.pages} />
-        <Ranking title="Button clicks" rows={summary.actions} labels={analyticsActions} />
-        <Ranking title="Referrers" rows={summary.sources} />
-      </div>
+        </>
+      ) : (
+        <AnalyticsPerformanceReports
+          report={performance}
+          tab={tab}
+          siteID={siteID ?? undefined}
+          range={range}
+          page={searchParams?.page}
+          baseURL={`${getSiteURL()}${site ? `/sites/${encodeURIComponent(site.slug)}` : '/'}`}
+        />
+      )}
     </section>
   )
 }

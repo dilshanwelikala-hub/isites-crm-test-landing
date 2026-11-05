@@ -1,7 +1,8 @@
 import type { Payload } from 'payload'
 
 import { analyticsActions } from './analytics'
-import { trackingEnabled } from './analyticsCollection'
+import { trackingEnabled, trackingPackage } from './analyticsCollection'
+import { sanitizeAttribution } from './analyticsAttribution'
 import {
   analyticsVisitor,
   excludedTrackingRequest,
@@ -73,6 +74,12 @@ export async function collectAnalytics(request: Request, payload: Payload) {
     where: { pageKey: { equals: claims.nonce } },
   })
   if (count.totalDocs >= 100) return reply(429)
+  const attribution = sanitizeAttribution(data.attribution)
+  const offer =
+    data.eventType === 'click' &&
+    ['package_primary', 'package_secondary', 'package_details'].includes(data.action)
+      ? await trackingPackage(payload, claims.site, data.packageSlug)
+      : claims.offer
   try {
     await payload.create({
       collection: 'analytics-events',
@@ -84,9 +91,18 @@ export async function collectAnalytics(request: Request, payload: Payload) {
         eventType: data.eventType,
         path: claims.path,
         visitor: analyticsVisitor(data.visitor, claims.site),
+        attributionVersion: attribution ? 2 : undefined,
+        utmSource: attribution?.source,
+        utmMedium: attribution?.medium,
+        utmCampaign: attribution?.campaign,
+        packageSlug: offer?.slug,
+        packageTitle: offer?.title,
         action: data.eventType === 'click' ? data.action : undefined,
-        referrer:
-          data.eventType === 'page_view' ? referrerHostname(data.referrer, origin) : undefined,
+        referrer: attribution
+          ? attribution.referrer
+          : data.eventType === 'page_view'
+            ? referrerHostname(data.referrer, origin)
+            : undefined,
       },
     })
   } catch (error) {

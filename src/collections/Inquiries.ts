@@ -6,6 +6,17 @@ import {
   validVisitorID,
   verifyTrackingToken,
 } from '../lib/analyticsServer'
+import { packageSlugFromPath, sanitizeAttribution } from '../lib/analyticsAttribution'
+
+const attributionFields = [
+  'analyticsSource',
+  'analyticsMedium',
+  'analyticsCampaign',
+  'analyticsReferrer',
+  'analyticsPackageSlug',
+  'analyticsPackageTitle',
+  'analyticsAttributionVersion',
+] as const
 
 const attributeAnalytics: CollectionBeforeChangeHook = async ({
   data,
@@ -16,6 +27,9 @@ const attributeAnalytics: CollectionBeforeChangeHook = async ({
   // Only verified website submissions may set attribution, never public REST fields.
   data.analyticsVisitor = operation === 'create' ? null : originalDoc?.analyticsVisitor
   data.analyticsPath = operation === 'create' ? null : originalDoc?.analyticsPath
+  for (const field of attributionFields)
+    data[field] = operation === 'create' ? null : originalDoc?.[field]
+  if (operation === 'create' && !req.user && req.payloadAPI !== 'local') data.status = 'new'
   if (
     operation === 'update' &&
     data.site !== undefined &&
@@ -23,6 +37,7 @@ const attributeAnalytics: CollectionBeforeChangeHook = async ({
   ) {
     data.analyticsVisitor = null
     data.analyticsPath = null
+    for (const field of attributionFields) data[field] = null
   }
   const input = data.analyticsInput
   delete data.analyticsInput
@@ -41,10 +56,20 @@ const attributeAnalytics: CollectionBeforeChangeHook = async ({
     claims.site !== (relationshipID(data.site) ?? null)
   )
     return data
+  const packageSlug = claims.offer?.slug || packageSlugFromPath(claims.path)
+  if (data.packageSlug && data.packageSlug !== packageSlug) return data
   try {
     if (await trackingEnabled(req.payload, claims.site)) {
       data.analyticsVisitor = analyticsVisitor(input.visitor, claims.site)
       data.analyticsPath = claims.path
+      const attribution = sanitizeAttribution(input.attribution)
+      data.analyticsAttributionVersion = attribution ? 2 : null
+      data.analyticsSource = attribution?.source ?? null
+      data.analyticsMedium = attribution?.medium ?? null
+      data.analyticsCampaign = attribution?.campaign ?? null
+      data.analyticsReferrer = attribution?.referrer ?? null
+      data.analyticsPackageSlug = packageSlug ?? null
+      data.analyticsPackageTitle = claims.offer?.title ?? null
     }
   } catch {
     req.payload.logger.warn(
@@ -207,6 +232,17 @@ export const Inquiries: CollectionConfig = {
     },
     { name: 'analyticsVisitor', type: 'text', index: true, admin: { hidden: true } },
     { name: 'analyticsPath', type: 'text', admin: { readOnly: true }, label: 'Analytics page' },
+    { name: 'analyticsAttributionVersion', type: 'number', admin: { hidden: true } },
+    ...(
+      [
+        'analyticsSource',
+        'analyticsMedium',
+        'analyticsCampaign',
+        'analyticsReferrer',
+        'analyticsPackageSlug',
+        'analyticsPackageTitle',
+      ] as const
+    ).map((name) => ({ name, type: 'text' as const, admin: { readOnly: true } })),
     {
       name: 'site',
       type: 'relationship',

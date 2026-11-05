@@ -35,7 +35,7 @@ tracking. This implementation is not a consent-management platform.
 
 An estimated visitor is a browser-tab session, not a unique person. A random identifier
 is held in sessionStorage and stored server-side only as a site-specific HMAC. Analytics
-does not store cookies, IP addresses, form contents, link destinations, URL query strings,
+does not store cookies, IP addresses, form contents, link destinations, full URL query strings,
 or full referrer URLs. Only external referrer hostnames are retained. Do Not Track,
 Global Privacy Control, preview URLs, authenticated editors, and obvious bots are excluded.
 Blocked scripts or unavailable storage reduce the measured totals.
@@ -68,6 +68,61 @@ database credentials:
 ```bash
 node --import tsx --test tests/adminNavigation.test.ts tests/analytics.test.ts
 node --import tsx --test tests/analytics.integration.ts
+```
+
+### Campaigns, Packages, and Lead Outcomes
+
+The site analytics screen now has Overview, Campaigns, Packages, and Lead outcomes views.
+The active view survives site/date filtering, refresh, and navigation. Tables are paginated
+at 25 rows, and keep the existing 90-day / 50,000-record report limits.
+
+- **Campaigns:** first-touch `utm_source`, `utm_medium`, and `utm_campaign` for each site's
+  browser-tab session, carried across internal page navigation into saved inquiries. The
+  campaign-link tool generates links to the selected site's homepage or package pages.
+  Labels are normalized to lowercase slug-style values, limited to 80 characters, and
+  email/URL-like values are discarded. Do not put personal information in campaign labels.
+- **Packages:** detail-page views, estimated visitor sessions, selected clicks, inquiries,
+  visitor conversion, and inquiries currently marked Won. Landing-card impressions are not
+  measured. Clicks on cards use published packages belonging to the signed site; detail
+  pages use signed package snapshots. Titles are shown from the newest available snapshot
+  in the selected period. Slug changes are reported separately.
+- **Lead outcomes:** current CRM statuses of tracked inquiries **created in the selected
+  period**, grouped by their acquisition source/campaign. Qualified, Proposal sent, and Won
+  are mutually exclusive current stages, not cumulative stage histories. Won rate is Won
+  inquiries divided by all tracked inquiries in the cohort; it is not confirmed revenue or
+  a booking/payment integration. Anonymous REST/GraphQL submissions cannot set their own
+  initial CRM status to Won.
+
+The first touch is retained even when it was direct/unknown, rather than overwritten by
+later campaign links in the same site's tab session. Separate sites have separate campaign
+storage. Tracking-disabled pages, editors, previews, and privacy opt-outs remain excluded.
+Attribution is self-reported first-party telemetry, not independently verified ad-platform data.
+
+Inquiry attribution is an immutable snapshot: ordinary status edits preserve it, and moving
+an inquiry to another site clears it to avoid false attribution. New inquiry source-page URLs
+omit query strings and fragments. Older traffic is labelled **Legacy / unattributed**, with
+no invented campaign backfill; legacy package paths can still identify package-page views.
+Historical clicks without a package identity cannot be assigned to a specific card.
+
+These additive schema changes introduce nullable campaign/package text fields and numeric
+attribution versions on events and inquiries, without new database enums. Do not enable
+the updated code on a hosted database until its schema is updated using the project's
+existing build/schema workflow. Validate in staging with a database backup before production.
+
+For an isolated local demo (never touches the configured CMS/Postgres database):
+
+```bash
+npm run preview:analytics
+```
+
+This creates an ignored `.analytics-preview-*` SQLite directory, sample sites/leads, and a
+temporary local demo account, then starts Next.js on an available port. The URL and local-only
+credentials are printed in the terminal. Stop this server before running a production build,
+because Next.js development and build commands share `.next`. It refuses to run on Vercel
+or with `NODE_ENV=production` and does not enable analytics on real hosted sites.
+
+```bash
+node --import tsx --test tests/adminNavigation.test.ts tests/analytics.test.ts tests/analyticsPerformance.test.ts tests/analytics.integration.ts
 ```
 
 ## Local setup

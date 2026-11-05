@@ -18,6 +18,12 @@ export const AnalyticsEvents: CollectionConfig = {
     { name: 'visitor', type: 'text', required: true },
     { name: 'action', type: 'text' },
     { name: 'referrer', type: 'text' },
+    { name: 'attributionVersion', type: 'number' },
+    { name: 'utmSource', type: 'text' },
+    { name: 'utmMedium', type: 'text' },
+    { name: 'utmCampaign', type: 'text' },
+    { name: 'packageSlug', type: 'text' },
+    { name: 'packageTitle', type: 'text' },
   ],
   indexes: [{ fields: ['site', 'createdAt'] }],
 }

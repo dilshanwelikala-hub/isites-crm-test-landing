@@ -131,7 +131,11 @@ export default async function PackagePage({ params, searchParams }: Args) {
   const inclusions = item.inclusions?.filter((inclusion) => inclusion.item) || []
 
   return (
-    <SiteAnalytics path={`/packages/${slug}`} preview={isPreview}>
+    <SiteAnalytics
+      path={`/packages/${slug}`}
+      preview={isPreview}
+      offer={{ slug: item.slug || slug, title: item.title }}
+    >
       <main>
         {isPreview ? <div className="previewBanner">Draft preview mode</div> : null}
         <header className="siteHeader">

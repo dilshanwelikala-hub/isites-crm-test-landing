@@ -6,16 +6,19 @@ import type { ReactNode } from 'react'
 import { trackingEnabled } from '../../../lib/analyticsCollection'
 import { createTrackingToken, excludedTrackingRequest } from '../../../lib/analyticsServer'
 import { AnalyticsProvider } from './SiteAnalytics.client'
+import type { PackageAttribution } from '../../../lib/analyticsAttribution'
 
 export async function SiteAnalytics({
   siteID = null,
   path,
   preview = false,
+  offer,
   children,
 }: {
   siteID?: number | string | null
   path: string
   preview?: boolean
+  offer?: PackageAttribution
   children: ReactNode
 }) {
   let token: string | null = null
@@ -33,6 +36,8 @@ export async function SiteAnalytics({
               .split('/')
               .map((segment) => encodeURIComponent(segment))
               .join('/'),
+            Date.now(),
+            offer ? { slug: offer.slug, title: offer.title.slice(0, 200) } : undefined,
           )
         }
       }
@@ -41,5 +46,9 @@ export async function SiteAnalytics({
       console.error('Site analytics unavailable for this page.')
     }
   }
-  return <AnalyticsProvider token={token}>{children}</AnalyticsProvider>
+  return (
+    <AnalyticsProvider token={token} siteKey={String(siteID ?? 'default')}>
+      {children}
+    </AnalyticsProvider>
+  )
 }

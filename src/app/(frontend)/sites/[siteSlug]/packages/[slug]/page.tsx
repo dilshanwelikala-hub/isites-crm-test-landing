@@ -201,6 +201,7 @@ export default async function SitePackagePage({ params, searchParams }: Args) {
 
   return (
     <SiteAnalytics
+      offer={{ slug: item.slug || slug, title: item.title }}
       siteID={site.id}
       path={`/sites/${siteSlug}/packages/${slug}`}
       preview={isPreview}

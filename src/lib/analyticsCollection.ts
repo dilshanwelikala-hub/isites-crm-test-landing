@@ -1,4 +1,33 @@
 import type { Payload } from 'payload'
+import { defaultPackages } from './landingDefaults'
+import type { PackageAttribution } from './analyticsAttribution'
+
+export async function trackingPackage(
+  payload: Payload,
+  site: number | null,
+  slug: unknown,
+): Promise<PackageAttribution | undefined> {
+  if (typeof slug !== 'string' || !slug || slug.length > 200 || /[\x00-\x1f/?#\\]/.test(slug))
+    return undefined
+  const result = await payload.find({
+    collection: 'landing-packages',
+    depth: 0,
+    limit: 1,
+    draft: false,
+    where: {
+      and: [
+        site === null ? { site: { exists: false } } : { site: { equals: site } },
+        { slug: { equals: slug } },
+        { _status: { equals: 'published' } },
+      ],
+    },
+    select: { slug: true, title: true },
+  })
+  const record =
+    result.docs[0] ||
+    (site === null ? defaultPackages.find((item) => item.slug === slug) : undefined)
+  return record ? { slug, title: record.title.slice(0, 200) } : undefined
+}
 
 export async function trackingEnabled(payload: Payload, site: number | null) {
   if (site === null) {

@@ -1,6 +1,13 @@
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto'
+import type { PackageAttribution } from './analyticsAttribution'
 
-export type TrackingClaims = { site: number | null; path: string; nonce: string; expires: number }
+export type TrackingClaims = {
+  site: number | null
+  path: string
+  nonce: string
+  expires: number
+  offer?: PackageAttribution
+}
 
 function secret() {
   return (
@@ -9,9 +16,14 @@ function secret() {
   )
 }
 
-export function createTrackingToken(site: number | null, path: string, now = Date.now()) {
+export function createTrackingToken(
+  site: number | null,
+  path: string,
+  now = Date.now(),
+  offer?: PackageAttribution,
+) {
   const body = Buffer.from(
-    JSON.stringify({ site, path, nonce: randomUUID(), expires: now + 86400000 }),
+    JSON.stringify({ site, path, nonce: randomUUID(), expires: now + 86400000, offer }),
   ).toString('base64url')
   return `${body}.${createHmac('sha256', secret()).update(body).digest('base64url')}`
 }
@@ -35,6 +47,15 @@ export function verifyTrackingToken(token: unknown, now = Date.now()): TrackingC
       typeof claims.expires !== 'number' ||
       claims.expires <= now ||
       claims.expires > now + 86400000
+    )
+      return null
+    if (
+      claims.offer !== undefined &&
+      (!claims.offer ||
+        typeof claims.offer.slug !== 'string' ||
+        claims.offer.slug.length > 200 ||
+        typeof claims.offer.title !== 'string' ||
+        claims.offer.title.length > 200)
     )
       return null
     return claims

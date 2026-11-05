@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
+    "preview:analytics": "node --import tsx scripts/preview-analytics.mjs",
     "build": "node --import tsx scripts/sync-payload-schema.mjs && next build",
     "build:next": "next build",
     "start": "next start",

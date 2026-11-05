@@ -29,7 +29,7 @@ export function InquiryForm({ packageSlug, packageTitle, siteId }: InquiryFormPr
       packageTitle,
       site: siteId,
       consentToContact: formData.get('consentToContact') === 'on',
-      sourcePageUrl: window.location.href,
+      sourcePageUrl: `${window.location.origin}${window.location.pathname}`,
       status: 'new',
       analyticsInput: inquiryAnalytics?.(),
     }

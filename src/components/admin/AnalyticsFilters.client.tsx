@@ -3,6 +3,7 @@
 import { Filter } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { analyticsHref } from '../../lib/analytics'
+import type { AnalyticsTab } from '../../lib/analyticsAttribution'
 
 export default function AnalyticsFilters({
   site,
@@ -10,12 +11,14 @@ export default function AnalyticsFilters({
   end,
   today,
   options,
+  tab = 'overview',
 }: {
   site: string
   start: string
   end: string
   today: string
   options: Array<{ id: number; name: string }>
+  tab?: AnalyticsTab
 }) {
   const [selectedSite, setSelectedSite] = useState(site)
   const formRef = useRef<HTMLFormElement>(null)
@@ -43,6 +46,7 @@ export default function AnalyticsFilters({
     >
       <input type="hidden" name="workspace" value="cms" />
       <input type="hidden" name="view" value="analytics" />
+      <input type="hidden" name="tab" value={tab} />
       <label>
         Site
         <select
@@ -91,7 +95,7 @@ export default function AnalyticsFilters({
           return (
             <a
               key={days}
-              href={`${analyticsHref(site === 'default' ? undefined : site)}&start=${date}`}
+              href={`${analyticsHref(site === 'default' ? undefined : site)}&tab=${tab}&start=${date}`}
               aria-current={start === date && end === today ? 'true' : undefined}
             >
               {days} days

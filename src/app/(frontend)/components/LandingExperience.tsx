@@ -24,6 +24,7 @@ function PackageActions({ basePath = '', item }: { basePath?: string; item: Land
         <a
           className="button buttonPrimary"
           data-analytics-event="package_primary"
+          data-analytics-package={item.slug}
           href={item.primaryAction.url}
         >
           {item.primaryAction.label || 'Book now'}
@@ -33,6 +34,7 @@ function PackageActions({ basePath = '', item }: { basePath?: string; item: Land
         <a
           className="button buttonSecondary"
           data-analytics-event="package_secondary"
+          data-analytics-package={item.slug}
           href={item.secondaryAction.url}
         >
           {item.secondaryAction.label || 'View details'}
@@ -42,6 +44,7 @@ function PackageActions({ basePath = '', item }: { basePath?: string; item: Land
         <a
           className="button buttonSecondary"
           data-analytics-event="package_details"
+          data-analytics-package={item.slug}
           href={packagePath}
         >
           Package page

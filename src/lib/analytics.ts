@@ -17,8 +17,26 @@ export type AnalyticsEvent = {
   path: string
   action?: string | null
   referrer?: string | null
+  attributionVersion?: number | null
+  utmSource?: string | null
+  utmMedium?: string | null
+  utmCampaign?: string | null
+  packageSlug?: string | null
+  packageTitle?: string | null
 }
-export type AnalyticsInquiry = { createdAt: string; analyticsVisitor?: string | null }
+export type AnalyticsInquiry = {
+  createdAt: string
+  analyticsVisitor?: string | null
+  status?: string | null
+  analyticsPath?: string | null
+  analyticsAttributionVersion?: number | null
+  analyticsSource?: string | null
+  analyticsMedium?: string | null
+  analyticsCampaign?: string | null
+  analyticsReferrer?: string | null
+  analyticsPackageSlug?: string | null
+  analyticsPackageTitle?: string | null
+}
 
 export function analyticsHref(siteID?: string | number) {
   return `/admin?workspace=cms&view=analytics&site=${encodeURIComponent(String(siteID ?? 'default'))}`
