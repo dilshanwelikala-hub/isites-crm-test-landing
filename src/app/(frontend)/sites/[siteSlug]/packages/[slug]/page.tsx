@@ -12,6 +12,7 @@ import {
   type LandingPackage,
 } from '../../../../../../lib/landingDefaults'
 import { getSiteURL } from '../../../../../../lib/siteURL'
+import { previewEnabled, packagePath } from '../../../../../../lib/preview'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,26 +33,13 @@ type SiteRecord = LandingContent & {
   siteStatus?: string
 }
 
-function firstParam(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value
-}
-
-function previewEnabled(searchParams: SearchParams = {}) {
-  const token = process.env.PREVIEW_SECRET || process.env.PAYLOAD_SECRET
-
-  return Boolean(
-    token &&
-    firstParam(searchParams.preview) === 'true' &&
-    firstParam(searchParams.previewToken) === token,
-  )
-}
-
 async function findSite(siteSlug: string, isPreview = false): Promise<SiteRecord | null> {
   const payload = await getPayload({ config })
   const result = await payload.find({
     collection: 'sites',
     depth: 2,
     draft: isPreview,
+    overrideAccess: isPreview,
     limit: 1,
     where: isPreview
       ? {
@@ -101,6 +89,7 @@ async function findPackage(
       collection: 'landing-packages',
       depth: 2,
       draft: isPreview,
+      overrideAccess: isPreview,
       limit: 1,
       where: {
         and: [
@@ -151,9 +140,13 @@ function imageFor(item: LandingPackage, site: SiteRecord) {
   )
 }
 
-export async function generateMetadata({ params }: Args): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Args): Promise<Metadata> {
   const { siteSlug, slug } = await params
-  const data = await findPackage(siteSlug, slug)
+  const isPreview = previewEnabled(
+    searchParams ? await searchParams : {},
+    packagePath(slug, siteSlug),
+  )
+  const data = await findPackage(siteSlug, slug, isPreview)
 
   if (!data) {
     return {
@@ -165,6 +158,9 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
   const image = imageFor(data.item, data.site)
 
   return {
+    ...(isPreview
+      ? { robots: { index: false, follow: false }, referrer: 'no-referrer' as const }
+      : {}),
     title,
     description: data.item.summary,
     alternates: {
@@ -189,7 +185,7 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
 export default async function SitePackagePage({ params, searchParams }: Args) {
   const { siteSlug, slug } = await params
   const resolvedSearchParams = searchParams ? await searchParams : {}
-  const isPreview = previewEnabled(resolvedSearchParams)
+  const isPreview = previewEnabled(resolvedSearchParams, packagePath(slug, siteSlug))
   const data = await findPackage(siteSlug, slug, isPreview)
 
   if (!data) {

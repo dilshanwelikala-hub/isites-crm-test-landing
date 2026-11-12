@@ -12,6 +12,7 @@ import {
   type LandingPackage,
 } from '../../../../lib/landingDefaults'
 import { getSiteURL } from '../../../../lib/siteURL'
+import { previewEnabled, sitePath } from '../../../../lib/preview'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,26 +32,13 @@ type SiteRecord = LandingContent & {
   siteStatus?: string
 }
 
-function firstParam(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value
-}
-
-function previewEnabled(searchParams: SearchParams = {}) {
-  const token = process.env.PREVIEW_SECRET || process.env.PAYLOAD_SECRET
-
-  return Boolean(
-    token &&
-    firstParam(searchParams.preview) === 'true' &&
-    firstParam(searchParams.previewToken) === token,
-  )
-}
-
 async function findSite(siteSlug: string, isPreview = false): Promise<SiteRecord | null> {
   const payload = await getPayload({ config })
   const result = await payload.find({
     collection: 'sites',
     depth: 2,
     draft: isPreview,
+    overrideAccess: isPreview,
     limit: 1,
     where: isPreview
       ? {
@@ -96,6 +84,7 @@ async function getSiteLandingData(siteSlug: string, isPreview = false) {
       collection: 'landing-packages',
       depth: 2,
       draft: isPreview,
+      overrideAccess: isPreview,
       limit: 50,
       sort: 'displayOrder',
       where: {
@@ -128,9 +117,10 @@ async function getSiteLandingData(siteSlug: string, isPreview = false) {
   }
 }
 
-export async function generateMetadata({ params }: Args): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Args): Promise<Metadata> {
   const { siteSlug } = await params
-  const data = await getSiteLandingData(siteSlug)
+  const isPreview = previewEnabled(searchParams ? await searchParams : {}, sitePath(siteSlug))
+  const data = await getSiteLandingData(siteSlug, isPreview)
 
   if (!data) {
     return {
@@ -146,6 +136,9 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
     defaultContent.hero?.fallbackImageUrl
 
   return {
+    ...(isPreview
+      ? { robots: { index: false, follow: false }, referrer: 'no-referrer' as const }
+      : {}),
     title,
     description,
     alternates: {
@@ -170,7 +163,7 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
 export default async function SitePage({ params, searchParams }: Args) {
   const { siteSlug } = await params
   const resolvedSearchParams = searchParams ? await searchParams : {}
-  const isPreview = previewEnabled(resolvedSearchParams)
+  const isPreview = previewEnabled(resolvedSearchParams, sitePath(siteSlug))
   const data = await getSiteLandingData(siteSlug, isPreview)
 
   if (!data) {

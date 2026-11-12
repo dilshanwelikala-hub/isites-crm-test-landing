@@ -1,0 +1,247 @@
+{
+  "auditReportVersion": 2,
+  "vulnerabilities": {
+    "@payloadcms/db-postgres": {
+      "name": "@payloadcms/db-postgres",
+      "severity": "low",
+      "isDirect": true,
+      "via": [
+        "@payloadcms/drizzle",
+        "payload"
+      ],
+      "effects": [],
+      "range": ">=0.1.10",
+      "nodes": [
+        "node_modules/@payloadcms/db-postgres"
+      ],
+      "fixAvailable": {
+        "name": "@payloadcms/db-postgres",
+        "version": "0.1.9",
+        "isSemVerMajor": true
+      }
+    },
+    "@payloadcms/db-sqlite": {
+      "name": "@payloadcms/db-sqlite",
+      "severity": "low",
+      "isDirect": true,
+      "via": [
+        "@payloadcms/drizzle",
+        "payload"
+      ],
+      "effects": [],
+      "range": "*",
+      "nodes": [
+        "node_modules/@payloadcms/db-sqlite"
+      ],
+      "fixAvailable": false
+    },
+    "@payloadcms/drizzle": {
+      "name": "@payloadcms/drizzle",
+      "severity": "low",
+      "isDirect": false,
+      "via": [
+        "payload"
+      ],
+      "effects": [
+        "@payloadcms/db-postgres"
+      ],
+      "range": "*",
+      "nodes": [
+        "node_modules/@payloadcms/drizzle"
+      ],
+      "fixAvailable": {
+        "name": "@payloadcms/db-postgres",
+        "version": "0.1.9",
+        "isSemVerMajor": true
+      }
+    },
+    "@payloadcms/graphql": {
+      "name": "@payloadcms/graphql",
+      "severity": "low",
+      "isDirect": false,
+      "via": [
+        "payload"
+      ],
+      "effects": [],
+      "range": "*",
+      "nodes": [
+        "node_modules/@payloadcms/graphql"
+      ],
+      "fixAvailable": true
+    },
+    "@payloadcms/next": {
+      "name": "@payloadcms/next",
+      "severity": "low",
+      "isDirect": true,
+      "via": [
+        "@payloadcms/graphql",
+        "@payloadcms/ui",
+        "payload"
+      ],
+      "effects": [
+        "@payloadcms/richtext-lexical"
+      ],
+      "range": "*",
+      "nodes": [
+        "node_modules/@payloadcms/next"
+      ],
+      "fixAvailable": {
+        "name": "@payloadcms/richtext-lexical",
+        "version": "0.1.9",
+        "isSemVerMajor": true
+      }
+    },
+    "@payloadcms/plugin-cloud-storage": {
+      "name": "@payloadcms/plugin-cloud-storage",
+      "severity": "low",
+      "isDirect": false,
+      "via": [
+        "@payloadcms/ui",
+        "payload"
+      ],
+      "effects": [],
+      "range": ">=1.0.5",
+      "nodes": [
+        "node_modules/@payloadcms/plugin-cloud-storage"
+      ],
+      "fixAvailable": true
+    },
+    "@payloadcms/richtext-lexical": {
+      "name": "@payloadcms/richtext-lexical",
+      "severity": "low",
+      "isDirect": true,
+      "via": [
+        "@payloadcms/next",
+        "@payloadcms/ui",
+        "payload"
+      ],
+      "effects": [],
+      "range": ">=0.1.10",
+      "nodes": [
+        "node_modules/@payloadcms/richtext-lexical"
+      ],
+      "fixAvailable": {
+        "name": "@payloadcms/richtext-lexical",
+        "version": "0.1.9",
+        "isSemVerMajor": true
+      }
+    },
+    "@payloadcms/storage-vercel-blob": {
+      "name": "@payloadcms/storage-vercel-blob",
+      "severity": "low",
+      "isDirect": true,
+      "via": [
+        "@payloadcms/plugin-cloud-storage",
+        "payload"
+      ],
+      "effects": [],
+      "range": "*",
+      "nodes": [
+        "node_modules/@payloadcms/storage-vercel-blob"
+      ],
+      "fixAvailable": false
+    },
+    "@payloadcms/ui": {
+      "name": "@payloadcms/ui",
+      "severity": "low",
+      "isDirect": false,
+      "via": [
+        "payload"
+      ],
+      "effects": [
+        "@payloadcms/plugin-cloud-storage",
+        "@payloadcms/richtext-lexical"
+      ],
+      "range": "*",
+      "nodes": [
+        "node_modules/@payloadcms/ui"
+      ],
+      "fixAvailable": {
+        "name": "@payloadcms/richtext-lexical",
+        "version": "0.1.9",
+        "isSemVerMajor": true
+      }
+    },
+    "deepmerge": {
+      "name": "deepmerge",
+      "severity": "low",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1243505,
+          "name": "deepmerge",
+          "dependency": "deepmerge",
+          "title": "deepmerge mergeObject() allows prototype poisoning of returned objects",
+          "url": "https://github.com/advisories/GHSA-gcqx-w48m-w2h4",
+          "severity": "low",
+          "cwe": [
+            "CWE-1321"
+          ],
+          "cvss": {
+            "score": 5.3,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N"
+          },
+          "range": ">=4.2.0 <=4.3.1"
+        }
+      ],
+      "effects": [
+        "payload"
+      ],
+      "range": ">=4.2.0",
+      "nodes": [
+        "node_modules/deepmerge"
+      ],
+      "fixAvailable": {
+        "name": "@payloadcms/richtext-lexical",
+        "version": "0.1.9",
+        "isSemVerMajor": true
+      }
+    },
+    "payload": {
+      "name": "payload",
+      "severity": "low",
+      "isDirect": true,
+      "via": [
+        "deepmerge"
+      ],
+      "effects": [
+        "@payloadcms/db-postgres",
+        "@payloadcms/db-sqlite",
+        "@payloadcms/drizzle",
+        "@payloadcms/graphql",
+        "@payloadcms/next",
+        "@payloadcms/plugin-cloud-storage",
+        "@payloadcms/richtext-lexical",
+        "@payloadcms/storage-vercel-blob",
+        "@payloadcms/ui"
+      ],
+      "range": "*",
+      "nodes": [
+        "node_modules/payload"
+      ],
+      "fixAvailable": {
+        "name": "@payloadcms/richtext-lexical",
+        "version": "0.1.9",
+        "isSemVerMajor": true
+      }
+    }
+  },
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 11,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 11
+    },
+    "dependencies": {
+      "prod": 414,
+      "dev": 1,
+      "optional": 96,
+      "peer": 6,
+      "peerOptional": 0,
+      "total": 516
+    }
+  }
+}

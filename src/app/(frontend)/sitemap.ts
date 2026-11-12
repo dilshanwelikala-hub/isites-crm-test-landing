@@ -3,11 +3,10 @@ import type { MetadataRoute } from 'next'
 import config from '@payload-config'
 import { getPayload } from 'payload'
 
-import { defaultPackages } from '../../lib/landingDefaults'
 import { getSiteURL } from '../../lib/siteURL'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  let slugs = defaultPackages.map((item) => item.slug).filter(Boolean) as string[]
+  let slugs: string[] = []
   let siteEntries: MetadataRoute.Sitemap = []
 
   try {
@@ -16,6 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       collection: 'landing-packages',
       depth: 1,
       draft: false,
+      overrideAccess: false,
       limit: 100,
       where: {
         and: [
@@ -36,6 +36,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       collection: 'landing-packages',
       depth: 1,
       draft: false,
+      overrideAccess: false,
       limit: 500,
       where: {
         and: [
@@ -55,6 +56,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const sites = await payload.find({
       collection: 'sites',
       draft: false,
+      overrideAccess: false,
       limit: 100,
       where: {
         and: [
@@ -104,7 +106,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ]
     })
   } catch {
-    // Keep fallback demo package URLs in the sitemap.
+    // Never publish fallback URLs for missing or unpublished records.
   }
 
   return [

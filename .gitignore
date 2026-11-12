@@ -10,3 +10,4 @@ payload-data.db-*
 .env
 public/media
 .analytics-preview-*
+.security-work

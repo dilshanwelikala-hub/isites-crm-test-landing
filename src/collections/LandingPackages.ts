@@ -1,34 +1,18 @@
 import type { CollectionConfig } from 'payload'
 
-import { getSiteURL } from '../lib/siteURL'
-
-function previewToken() {
-  return process.env.PREVIEW_SECRET || process.env.PAYLOAD_SECRET
-}
+import { authenticated, readPublishedPackage } from '../lib/contentAccess'
+import { packagePreviewURL } from '../lib/preview'
 
 export const LandingPackages: CollectionConfig = {
   slug: 'landing-packages',
   access: {
-    read: () => true,
+    read: readPublishedPackage,
+    readVersions: authenticated,
   },
   admin: {
     defaultColumns: ['title', 'site', 'category', 'displayOrder', '_status'],
     group: 'CMS',
-    preview: (doc) => {
-      const token = previewToken()
-
-      if (!token || typeof doc.slug !== 'string') {
-        return null
-      }
-
-      if (doc.site && typeof doc.site === 'object' && 'slug' in doc.site && typeof doc.site.slug === 'string') {
-        return `${getSiteURL()}/sites/${doc.site.slug}/packages/${doc.slug}?preview=true&previewToken=${encodeURIComponent(
-          token,
-        )}`
-      }
-
-      return `${getSiteURL()}/packages/${doc.slug}?preview=true&previewToken=${encodeURIComponent(token)}`
-    },
+    preview: (doc, { req }) => packagePreviewURL(doc, req),
     useAsTitle: 'title',
   },
   fields: [
@@ -37,7 +21,8 @@ export const LandingPackages: CollectionConfig = {
       type: 'relationship',
       relationTo: 'sites',
       admin: {
-        description: 'Assign this package to a specific website. Leave empty for the default demo site.',
+        description:
+          'Assign this package to a specific website. Leave empty for the default demo site.',
         position: 'sidebar',
       },
     },

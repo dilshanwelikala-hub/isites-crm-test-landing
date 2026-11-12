@@ -1,5 +1,4 @@
-import type { Payload } from 'payload'
-import { defaultPackages } from './landingDefaults'
+import type { Payload, PayloadRequest } from 'payload'
 import type { PackageAttribution } from './analyticsAttribution'
 
 export async function trackingPackage(
@@ -23,19 +22,25 @@ export async function trackingPackage(
     },
     select: { slug: true, title: true },
   })
-  const record =
-    result.docs[0] ||
-    (site === null ? defaultPackages.find((item) => item.slug === slug) : undefined)
+  const record = result.docs[0]
   return record ? { slug, title: record.title.slice(0, 200) } : undefined
 }
 
-export async function trackingEnabled(payload: Payload, site: number | null) {
+export async function trackingEnabled(payload: Payload, site: number | null, req?: PayloadRequest) {
   if (site === null) {
-    const page = await payload.findGlobal({ slug: 'landing-page', depth: 0, draft: false })
+    const page = await payload.findGlobal({
+      slug: 'landing-page',
+      depth: 0,
+      draft: false,
+      req,
+      overrideAccess: false,
+    })
     return page.analyticsEnabled === true
   }
   const page = await payload.findByID({
     collection: 'sites',
+    req,
+    overrideAccess: false,
     id: site,
     depth: 0,
     draft: false,

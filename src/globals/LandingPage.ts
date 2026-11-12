@@ -1,27 +1,17 @@
 import type { GlobalConfig } from 'payload'
 
-import { getSiteURL } from '../lib/siteURL'
-
-function previewToken() {
-  return process.env.PREVIEW_SECRET || process.env.PAYLOAD_SECRET
-}
+import { authenticated, readPublishedContent } from '../lib/contentAccess'
+import { previewURL } from '../lib/preview'
 
 export const LandingPage: GlobalConfig = {
   slug: 'landing-page',
   access: {
-    read: () => true,
+    read: readPublishedContent,
+    readVersions: authenticated,
   },
   admin: {
     group: 'CMS',
-    preview: () => {
-      const token = previewToken()
-
-      if (!token) {
-        return null
-      }
-
-      return `${getSiteURL()}/?preview=true&previewToken=${encodeURIComponent(token)}`
-    },
+    preview: (_doc, { req }) => (req.user ? previewURL('/') : null),
   },
   fields: [
     {
@@ -30,7 +20,8 @@ export const LandingPage: GlobalConfig = {
       defaultValue: false,
       admin: {
         position: 'sidebar',
-        description: 'Enable first-party page and button analytics after reviewing your site privacy notice.',
+        description:
+          'Enable first-party page and button analytics after reviewing your site privacy notice.',
       },
     },
     {
@@ -89,7 +80,8 @@ export const LandingPage: GlobalConfig = {
         {
           name: 'text',
           type: 'text',
-          defaultValue: 'Demo content is editable from the CMS and published directly to this page.',
+          defaultValue:
+            'Demo content is editable from the CMS and published directly to this page.',
         },
         {
           name: 'linkLabel',

@@ -2,11 +2,8 @@ import type { CollectionBeforeValidateHook, CollectionConfig } from 'payload'
 
 import { defaultContent } from '../lib/landingDefaults'
 import { applySiteTemplateDefaults } from '../lib/siteTemplates'
-import { getSiteURL } from '../lib/siteURL'
-
-function previewToken() {
-  return process.env.PREVIEW_SECRET || process.env.PAYLOAD_SECRET
-}
+import { authenticated, readPublishedSite } from '../lib/contentAccess'
+import { previewURL, sitePath } from '../lib/preview'
 
 const applyTemplateDefaults: CollectionBeforeValidateHook = ({ data, operation }) => {
   if (operation !== 'create' || !data) {
@@ -19,7 +16,8 @@ const applyTemplateDefaults: CollectionBeforeValidateHook = ({ data, operation }
 export const Sites: CollectionConfig = {
   slug: 'sites',
   access: {
-    read: () => true,
+    read: readPublishedSite,
+    readVersions: authenticated,
     create: ({ req: { user } }) => Boolean(user),
     update: ({ req: { user } }) => Boolean(user),
     delete: ({ req: { user } }) => Boolean(user),
@@ -27,15 +25,8 @@ export const Sites: CollectionConfig = {
   admin: {
     defaultColumns: ['name', 'slug', 'template', 'siteStatus', '_status'],
     group: 'CMS',
-    preview: (doc) => {
-      const token = previewToken()
-
-      if (!token || typeof doc.slug !== 'string') {
-        return null
-      }
-
-      return `${getSiteURL()}/sites/${doc.slug}?preview=true&previewToken=${encodeURIComponent(token)}`
-    },
+    preview: (doc, { req }) =>
+      req.user && typeof doc.slug === 'string' ? previewURL(sitePath(doc.slug)) : null,
     useAsTitle: 'name',
   },
   fields: [
@@ -45,7 +36,8 @@ export const Sites: CollectionConfig = {
       defaultValue: false,
       admin: {
         position: 'sidebar',
-        description: 'Enable first-party page and button analytics after reviewing your site privacy notice.',
+        description:
+          'Enable first-party page and button analytics after reviewing your site privacy notice.',
       },
     },
     {

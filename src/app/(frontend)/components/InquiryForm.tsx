@@ -53,27 +53,28 @@ export function InquiryForm({ packageSlug, packageTitle, siteId }: InquiryFormPr
     <form action={submitInquiry} className="inquiryForm">
       <label>
         Name
-        <input name="name" required />
+        <input maxLength={200} name="name" required />
       </label>
       <label>
         Email
-        <input name="email" required type="email" />
+        <input maxLength={254} name="email" required type="email" />
       </label>
       <label>
         Phone
-        <input name="phone" />
+        <input maxLength={80} name="phone" />
       </label>
       <label>
         Group or company
-        <input name="company" />
+        <input maxLength={200} name="company" />
       </label>
       <label>
         Guests
-        <input min="1" name="guestCount" type="number" />
+        <input min="1" max="10000" name="guestCount" type="number" />
       </label>
       <label>
         Message
         <textarea
+          maxLength={10000}
           name="message"
           required
           rows={5}

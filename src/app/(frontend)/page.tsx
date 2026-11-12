@@ -1,86 +1,68 @@
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 
 import config from '@payload-config'
 import { getPayload } from 'payload'
 
-import {
-  defaultContent,
-  defaultPackages,
-  type LandingContent,
-  type LandingPackage,
-} from '../../lib/landingDefaults'
+import { defaultContent, type LandingContent, type LandingPackage } from '../../lib/landingDefaults'
 import { getSiteURL } from '../../lib/siteURL'
 import { LandingExperience } from './components/LandingExperience'
 import { SiteAnalytics } from './components/SiteAnalytics'
+import { previewEnabled } from '../../lib/preview'
 
 export const dynamic = 'force-dynamic'
 
 type SearchParams = Record<string, string | string[] | undefined>
 
-function firstParam(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value
-}
-
-function previewEnabled(searchParams: SearchParams = {}) {
-  const token = process.env.PREVIEW_SECRET || process.env.PAYLOAD_SECRET
-
-  return Boolean(
-    token &&
-    firstParam(searchParams.preview) === 'true' &&
-    firstParam(searchParams.previewToken) === token,
-  )
-}
-
 async function getLandingData(isPreview = false) {
-  try {
-    const payload = await getPayload({ config })
-    const landingPage = await payload.findGlobal({
-      slug: 'landing-page',
-      depth: 2,
-      draft: isPreview,
-    })
-    const packages = await payload.find({
-      collection: 'landing-packages',
-      depth: 2,
-      draft: isPreview,
-      limit: 50,
-      sort: 'displayOrder',
-      where: {
-        and: [
-          {
-            site: {
-              exists: false,
-            },
+  const payload = await getPayload({ config })
+  const landingPage = await payload.findGlobal({
+    slug: 'landing-page',
+    depth: 2,
+    draft: isPreview,
+    overrideAccess: isPreview,
+  })
+  if (!isPreview && landingPage._status !== 'published') notFound()
+  const packages = await payload.find({
+    collection: 'landing-packages',
+    depth: 2,
+    draft: isPreview,
+    overrideAccess: isPreview,
+    limit: 50,
+    sort: 'displayOrder',
+    where: {
+      and: [
+        {
+          site: {
+            exists: false,
           },
-          ...(isPreview
-            ? []
-            : [
-                {
-                  _status: {
-                    equals: 'published',
-                  },
+        },
+        ...(isPreview
+          ? []
+          : [
+              {
+                _status: {
+                  equals: 'published',
                 },
-              ]),
-        ],
-      },
-    })
+              },
+            ]),
+      ],
+    },
+  })
 
-    return {
-      content: (landingPage || defaultContent) as LandingContent,
-      packages: packages.docs.length
-        ? (packages.docs as unknown as LandingPackage[])
-        : defaultPackages,
-    }
-  } catch {
-    return {
-      content: defaultContent,
-      packages: defaultPackages,
-    }
+  return {
+    content: (landingPage || defaultContent) as LandingContent,
+    packages: packages.docs as unknown as LandingPackage[],
   }
 }
 
-export async function generateMetadata(): Promise<Metadata> {
-  const { content } = await getLandingData()
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams?: Promise<SearchParams>
+}): Promise<Metadata> {
+  const isPreview = previewEnabled(searchParams ? await searchParams : {}, '/')
+  const { content } = await getLandingData(isPreview)
   const title = content.seo?.title || defaultContent.seo?.title
   const description = content.seo?.description || defaultContent.seo?.description
   const image =
@@ -89,6 +71,9 @@ export async function generateMetadata(): Promise<Metadata> {
     defaultContent.hero?.fallbackImageUrl
 
   return {
+    ...(isPreview
+      ? { robots: { index: false, follow: false }, referrer: 'no-referrer' as const }
+      : {}),
     title,
     description,
     alternates: {
@@ -112,7 +97,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function Page({ searchParams }: { searchParams?: Promise<SearchParams> }) {
   const resolvedSearchParams = searchParams ? await searchParams : {}
-  const isPreview = previewEnabled(resolvedSearchParams)
+  const isPreview = previewEnabled(resolvedSearchParams, '/')
   const { content, packages } = await getLandingData(isPreview)
 
   return (

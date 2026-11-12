@@ -7,6 +7,7 @@ import {
   verifyTrackingToken,
 } from '../lib/analyticsServer'
 import { packageSlugFromPath, sanitizeAttribution } from '../lib/analyticsAttribution'
+import { siteScope, validatePublicInquiry } from '../lib/publicInquiry'
 
 const attributionFields = [
   'analyticsSource',
@@ -59,7 +60,7 @@ const attributeAnalytics: CollectionBeforeChangeHook = async ({
   const packageSlug = claims.offer?.slug || packageSlugFromPath(claims.path)
   if (data.packageSlug && data.packageSlug !== packageSlug) return data
   try {
-    if (await trackingEnabled(req.payload, claims.site)) {
+    if (await trackingEnabled(req.payload, claims.site, req)) {
       data.analyticsVisitor = analyticsVisitor(input.visitor, claims.site)
       data.analyticsPath = claims.path
       const attribution = sanitizeAttribution(input.attribution)
@@ -111,31 +112,14 @@ const connectInquiry: CollectionBeforeChangeHook = async ({ data, operation, req
   }
 
   const siteID = relationshipID(data.site)
-  const contactWhere: Where = siteID
-    ? {
-        and: [
-          {
-            email: {
-              equals: email,
-            },
-          },
-          {
-            site: {
-              equals: siteID,
-            },
-          },
-        ],
-      }
-    : {
-        email: {
-          equals: email,
-        },
-      }
+  const contactWhere: Where = { and: [{ email: { equals: email } }, siteScope(siteID)] }
 
   const contacts = await req.payload.find({
     collection: 'contacts',
     limit: 1,
     overrideAccess: true,
+    depth: 0,
+    req,
     where: contactWhere,
   })
 
@@ -157,14 +141,20 @@ const connectInquiry: CollectionBeforeChangeHook = async ({ data, operation, req
       collection: 'contacts',
       data: contactData,
       overrideAccess: true,
+      depth: 0,
+      req,
     }))
 
   if (contacts.docs[0]) {
     await req.payload.update({
       collection: 'contacts',
       id: contacts.docs[0].id,
-      data: contactData,
+      // An inquiry is not proof of identity. Preserve the existing customer's
+      // name, details, ownership, and lifecycle; retain submitted data on the lead.
+      data: { lastInquiryAt: contactData.lastInquiryAt },
       overrideAccess: true,
+      depth: 0,
+      req,
     })
   }
 
@@ -173,31 +163,20 @@ const connectInquiry: CollectionBeforeChangeHook = async ({ data, operation, req
   }
 
   if (data.packageSlug && !data.package) {
-    const packageWhere: Where = siteID
-      ? {
-          and: [
-            {
-              slug: {
-                equals: data.packageSlug,
-              },
-            },
-            {
-              site: {
-                equals: siteID,
-              },
-            },
-          ],
-        }
-      : {
-          slug: {
-            equals: data.packageSlug,
-          },
-        }
+    const packageWhere: Where = {
+      and: [
+        siteScope(siteID),
+        { slug: { equals: data.packageSlug } },
+        { _status: { equals: 'published' } },
+      ],
+    }
 
     const packages = await req.payload.find({
       collection: 'landing-packages',
       limit: 1,
       overrideAccess: true,
+      depth: 0,
+      req,
       where: packageWhere,
     })
 
@@ -507,6 +486,7 @@ export const Inquiries: CollectionConfig = {
     },
   ],
   hooks: {
+    beforeValidate: [validatePublicInquiry],
     beforeChange: [attributeAnalytics, connectInquiry],
   },
 }

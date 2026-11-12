@@ -3,30 +3,42 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24.22.1 <25"
+  },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "preview:analytics": "node --import tsx scripts/preview-analytics.mjs",
-    "build": "node --import tsx scripts/sync-payload-schema.mjs && next build",
-    "build:next": "next build",
+    "build": "node --import tsx scripts/sync-payload-schema.mjs && next build --webpack",
+    "build:next": "next build --webpack",
     "start": "next start",
+    "test": "node --import tsx --test tests/adminNavigation.test.ts tests/analytics.test.ts tests/analyticsPerformance.test.ts tests/preview.test.ts tests/dependencyCompatibility.test.ts tests/analytics.integration.ts tests/security.integration.ts",
+    "typecheck": "tsc --noEmit --incremental false",
     "payload": "payload",
     "seed": "node --import tsx scripts/seed-demo-content.mjs",
     "generate:types": "payload generate:types",
     "generate:importmap": "payload generate:importmap"
   },
   "dependencies": {
-    "@payloadcms/db-postgres": "^3.88.0",
-    "@payloadcms/db-sqlite": "^3.86.0",
-    "@payloadcms/next": "^3.86.0",
-    "@payloadcms/richtext-lexical": "^3.86.0",
-    "@payloadcms/storage-vercel-blob": "^3.88.0",
+    "@payloadcms/db-postgres": "3.93.0",
+    "@payloadcms/db-sqlite": "3.93.0",
+    "@payloadcms/next": "3.93.0",
+    "@payloadcms/richtext-lexical": "3.93.0",
+    "@payloadcms/storage-vercel-blob": "3.93.0",
     "graphql": "^16.11.0",
     "lucide-react": "^1.57.0",
-    "next": "15.4.11",
-    "payload": "^3.86.0",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "sharp": "^0.34.3"
+    "next": "16.4.6",
+    "payload": "3.93.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "sharp": "0.35.5"
+  },
+  "overrides": {
+    "dompurify": "3.4.17",
+    "happy-dom": "21.0.4",
+    "@esbuild-kit/core-utils": {
+      "esbuild": "0.25.12"
+    }
   },
   "devDependencies": {
     "@types/node": "^24.2.1",

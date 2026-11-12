@@ -61,6 +61,7 @@ export default buildConfig({
         },
       })
     : sqliteAdapter({
+        transactionOptions: { behavior: 'immediate' },
         client: {
           url: process.env.DATABASE_URI || 'file:./payload-data.db',
         },

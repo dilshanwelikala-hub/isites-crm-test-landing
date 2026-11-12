@@ -211,6 +211,7 @@ test('campaign and package attribution persists and current CRM status drives ou
     req: { payloadAPI: 'REST' },
     data: {
       name: 'Campaign lead',
+      consentToContact: true,
       email: 'campaign@example.test',
       message: 'Testing',
       site: siteA,

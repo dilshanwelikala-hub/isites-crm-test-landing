@@ -2,6 +2,54 @@
 
 This is a multi-site Web CMS prototype built with Next.js and Payload CMS.
 
+## Security hardening on 12 November 2026
+
+Use Node **24.22.1 or a newer 24.x release** (`.nvmrc` and `package.json` record
+the requirement). The patched stack uses Payload 3.93.0, Next.js 16.4.6,
+React 19.3.1, and Sharp 0.35.5. Related Payload packages are kept at the same
+version. Targeted overrides patch DOMPurify, Happy DOM, and esbuild; retain the
+lockfile and use `npm ci` for reproducible installs.
+
+Anonymous reads are limited to published content and live sites. Published
+packages belonging to draft or archived sites are also hidden. Public frontend
+queries enforce the same rules, and removed/unpublished offers do not fall back
+to static demo offers. Editors can still view drafts while signed in.
+
+Draft preview requires a **dedicated `PREVIEW_SECRET` of at least 32 characters,
+different from `PAYLOAD_SECRET`**. Missing, short, or reused keys disable preview.
+The admin generates signed links valid for 15 minutes and bound to the exact
+page path. The key itself is never included in a link, and old raw-secret links
+no longer authorize previews. Generate a new link from the editor when one expires.
+
+Public inquiry creation accepts only visitor fields and requires contact consent.
+It validates the published site/package, preserves established customer details,
+and matches contacts within the exact site scope. Internal CRM fields are assigned
+by the server. Related contact writes share the inquiry transaction; SQLite
+transactions are enabled for local development and tests.
+
+Validation commands:
+
+```bash
+npm test
+npm run typecheck
+node --import tsx scripts/verify-security.mjs
+npm audit --omit=dev
+```
+
+`verify-security.mjs` creates an isolated temporary SQLite database, runs
+`next build --webpack` directly, then checks production HTTP routes locally.
+It clears hosted database/storage variables, uses generated test credentials,
+and removes its temporary database afterward. Its `.next` output is a test build;
+production must rebuild against its own environment. Stop local dev servers first.
+This verification never invokes `sync-payload-schema.mjs`.
+
+Before deploying the update, configure the Node runtime and dedicated preview key,
+validate the upgrade against a staging Postgres database and staging Blob store,
+and back up production. If the auth secret was previously used in shared preview
+URLs, rotate it and invalidate affected sessions. The existing hosted schema-sync
+build step remains a separate production-readiness issue; this change does not
+claim full client isolation or completion of every audit recommendation.
+
 ## What it includes
 
 - Public landing page at `/`
